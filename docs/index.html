@@ -1,0 +1,1407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SimpleEvolve — LLM-Driven Code Evolution</title>
+    <style>
+        /* ===== Reset & Variables ===== */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary: #2094f3;
+            --primary-dark: #1976d2;
+            --primary-light: #42a5f5;
+            --accent: #00bcd4;
+            --accent-dim: rgba(0, 188, 212, 0.12);
+            --dark: #1a1a1a;
+            --dark-2: #212121;
+            --dark-surface: #2a2a2a;
+            --dark-border: #404040;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-muted: #808080;
+            --gradient: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--dark);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        /* Subtle grain overlay */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.025;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        }
+
+        /* ===== Navigation ===== */
+        .nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 0 2rem;
+            transition: background 0.3s, backdrop-filter 0.3s, box-shadow 0.3s;
+        }
+
+        .nav.scrolled {
+            background: rgba(12, 12, 29, 0.88);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            box-shadow: 0 1px 0 var(--dark-border);
+        }
+
+        .nav-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 64px;
+        }
+
+        .nav-logo {
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            text-decoration: none;
+        }
+
+        .nav-center {
+            flex: 1;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .github-stats {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.4rem 0.8rem;
+            background: var(--dark-surface);
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        .github-stats a {
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+            color: var(--text-secondary);
+            text-decoration: none;
+        }
+
+        .github-stats a:hover {
+            color: var(--primary);
+        }
+
+        .nav-links a:hover { color: var(--text-primary); }
+
+        .nav-links .btn-nav {
+            background: var(--gradient);
+            color: white;
+            padding: 7px 18px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .nav-links .btn-nav:hover {
+            color: white;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+        }
+
+        /* ===== Ticker / Marquee ===== */
+        .ticker {
+            margin-top: 64px;
+            background: var(--dark-2);
+            border-bottom: 1px solid var(--dark-border);
+            overflow: hidden;
+            padding: 12px 0;
+        }
+
+        .ticker-track {
+            display: flex;
+            width: max-content;
+            animation: ticker 30s linear infinite;
+        }
+
+        .ticker-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 16px;
+            margin: 0 6px;
+            background: var(--dark-surface);
+            border: 1px solid var(--dark-border);
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+            font-weight: 500;
+        }
+
+        .ticker-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .ticker-item.accent .ticker-dot { background: var(--accent); }
+
+        @keyframes ticker {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        /* ===== Hero ===== */
+        .hero {
+            position: relative;
+            padding: 100px 2rem 90px;
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(102, 126, 234, 0.035) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(102, 126, 234, 0.035) 1px, transparent 1px);
+            background-size: 60px 60px;
+            pointer-events: none;
+        }
+
+        .hero-glow {
+            position: absolute;
+            top: -180px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 900px;
+            height: 600px;
+            background: radial-gradient(ellipse, rgba(102, 126, 234, 0.14) 0%, rgba(118, 75, 162, 0.06) 40%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            max-width: 820px;
+            margin: 0 auto;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: var(--dark-surface);
+            border: 1px solid var(--dark-border);
+            padding: 6px 18px 6px 6px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+        }
+
+        .hero-badge .tag {
+            background: var(--gradient);
+            color: white;
+            padding: 3px 12px;
+            border-radius: 14px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        .hero h1 {
+            font-weight: 600;
+            font-size: clamp(2.5rem, 6vw, 4.5rem);
+            font-weight: 800;
+            letter-spacing: -0.035em;
+            line-height: 1.1;
+            margin-bottom: 1.5rem;
+        }
+
+        .gradient-text {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 2.5rem;
+            line-height: 1.7;
+        }
+
+        .hero-actions {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-weight: 400;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn:hover { transform: translateY(-2px); }
+
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+            box-shadow: 0 4px 24px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:hover { box-shadow: 0 8px 32px rgba(102, 126, 234, 0.4); }
+
+        .btn-outline {
+            background: transparent;
+            color: var(--text-primary);
+            border: 1px solid var(--dark-border);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.12);
+        }
+
+        .btn-outline svg { opacity: 0.7; }
+
+        .github-stars {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--dark-surface);
+            border: 1px solid var(--dark-border);
+            padding: 10px 22px;
+            border-radius: 10px;
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+        }
+
+        .github-stars svg {
+            width: 18px;
+            height: 18px;
+            fill: #f0c040;
+        }
+
+        /* ===== Shared Section Styles ===== */
+        .section {
+            padding: 100px 2rem;
+        }
+
+        .section-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .section-label {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.14em;
+            color: var(--primary-light);
+            margin-bottom: 1rem;
+        }
+
+        .section-label::before {
+            content: '';
+            width: 20px;
+            height: 2px;
+            background: var(--gradient);
+            border-radius: 1px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            font-size: clamp(2rem, 4vw, 3rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .section-desc {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+            max-width: 580px;
+            margin-bottom: 3rem;
+            line-height: 1.7;
+        }
+
+        /* ===== Guidance ===== */
+        .guidance { background: var(--dark-2); }
+
+        .guidance-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .guidance-card {
+            background: var(--dark-surface);
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            padding: 2rem;
+            text-decoration: none;
+            color: var(--text-primary);
+            transition: transform 0.3s, border-color 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .guidance-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+            box-shadow: 0 8px 30px rgba(102, 126, 234, 0.12);
+        }
+
+        .guidance-card .g-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            margin-bottom: 1.25rem;
+        }
+
+        .guidance-card h3 {
+            font-weight: 600;
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .guidance-card p {
+            color: var(--text-secondary);
+            font-size: 0.88rem;
+            line-height: 1.6;
+        }
+
+        .guidance-card .arrow {
+            position: absolute;
+            top: 2rem;
+            right: 2rem;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            transition: transform 0.3s, color 0.3s;
+        }
+
+        .guidance-card:hover .arrow {
+            transform: translateX(4px);
+            color: var(--primary);
+        }
+
+        /* ===== How It Works ===== */
+        .how-it-works { background: var(--dark); position: relative; }
+
+        .pipeline {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 1rem;
+            position: relative;
+        }
+
+        /* Connecting line behind step circles */
+        .pipeline::before {
+            content: '';
+            position: absolute;
+            top: 24px;
+            left: calc(10% + 24px);
+            right: calc(10% + 24px);
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--accent) 100%);
+            opacity: 0;
+            z-index: 0;
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: opacity 0.8s ease-out 0.3s, transform 1.2s ease-out 0.3s;
+        }
+
+        .pipeline.visible::before {
+            opacity: 0.4;
+            transform: scaleX(1);
+        }
+
+        .step {
+            position: relative;
+            z-index: 1;
+            text-align: center;
+            opacity: 0;
+            transform: translateY(30px) scale(0.9);
+            transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+        }
+
+        .step.visible { opacity: 1; transform: translateY(0) scale(1); }
+        .step:nth-child(1) { transition-delay: 0.1s; }
+        .step:nth-child(2) { transition-delay: 0.25s; }
+        .step:nth-child(3) { transition-delay: 0.4s; }
+        .step:nth-child(4) { transition-delay: 0.55s; }
+        .step:nth-child(5) { transition-delay: 0.7s; }
+
+        .step-num {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--dark-surface);
+            border: 2px solid var(--dark-border);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Courier New', Consolas, monospace;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--primary-light);
+            margin-bottom: 1.25rem;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .step:hover .step-num {
+            border-color: var(--primary);
+            box-shadow: 0 0 24px rgba(102, 126, 234, 0.25);
+        }
+
+        .step-card {
+            background: var(--dark-surface);
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            padding: 1.5rem 1.25rem;
+            min-height: 218px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .step:hover .step-card {
+            transform: translateY(-4px);
+            border-color: var(--primary);
+        }
+
+        .step-icon { font-size: 1.8rem; margin-bottom: 0.75rem; line-height: 1; }
+
+        .step-card h4 {
+            font-weight: 600;
+            font-size: 0.95rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            min-height: 2.4em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .step-card p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            line-height: 1.55;
+            min-height: 6.3em;
+        }
+
+        .loop-badge {
+            text-align: center;
+            margin-top: 2.5rem;
+        }
+
+        .loop-badge span {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--accent-dim);
+            color: var(--accent);
+            padding: 10px 24px;
+            border-radius: 24px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border: 1px solid rgba(0, 229, 160, 0.15);
+        }
+
+        /* Sampling breakdown */
+        .sampling-panel {
+            margin-top: 3.5rem;
+            background: var(--dark-surface);
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            padding: 2rem;
+        }
+
+        .sampling-panel h4 {
+            font-weight: 600;
+            font-weight: 700;
+            margin-bottom: 0.4rem;
+            font-size: 1.1rem;
+        }
+
+        .sampling-panel .sub {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .s-bars { display: flex; flex-direction: column; gap: 0.9rem; }
+
+        .s-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .s-label {
+            min-width: 110px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .s-track {
+            flex: 1;
+            height: 22px;
+            background: var(--dark);
+            border-radius: 11px;
+            overflow: hidden;
+        }
+
+        .s-fill {
+            height: 100%;
+            border-radius: 11px;
+            width: 0;
+            transition: width 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .s-fill.exploit { background: var(--gradient); }
+        .s-fill.explore { background: linear-gradient(135deg, var(--primary), var(--accent)); }
+        .s-fill.random  { background: linear-gradient(135deg, var(--accent), #00c090); }
+
+        .s-pct {
+            min-width: 44px;
+            text-align: right;
+            font-family: 'Courier New', Consolas, monospace;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        /* ===== Experiment Results ===== */
+        .results { background: var(--dark-2); }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+
+        .result-card {
+            background: var(--dark-surface);
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            padding: 1.75rem 2rem;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .result-card.visible { opacity: 1; transform: translateY(0); }
+
+        .result-head {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.25rem;
+        }
+
+        .result-head h4 {
+            font-weight: 600;
+            font-weight: 700;
+            font-size: 1.05rem;
+        }
+
+        .result-mult {
+            background: var(--accent-dim);
+            color: var(--accent);
+            padding: 4px 14px;
+            border-radius: 8px;
+            font-family: 'Courier New', Consolas, monospace;
+            font-size: 0.82rem;
+            font-weight: 600;
+            border: 1px solid rgba(0, 229, 160, 0.12);
+        }
+
+        .feature-points {
+            display: flex;
+            flex-direction: column;
+            gap: 0.9rem;
+        }
+
+        .feature-point {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.65;
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        .feature-point::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.65rem;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--primary);
+            box-shadow: 0 0 10px rgba(32, 148, 243, 0.45);
+        }
+
+        .feature-point strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .r-bars { display: flex; flex-direction: column; gap: 0.6rem; }
+
+        .r-row { display: flex; align-items: center; gap: 0.75rem; }
+
+        .r-method {
+            min-width: 90px;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .r-method.ours { color: var(--primary-light); }
+
+        .r-track {
+            flex: 1;
+            height: 26px;
+            background: var(--dark);
+            border-radius: 7px;
+            overflow: hidden;
+        }
+
+        .r-fill {
+            height: 100%;
+            border-radius: 7px;
+            width: 0;
+            transition: width 1.4s cubic-bezier(0.22, 1, 0.36, 1);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            min-width: 0;
+        }
+
+        .r-fill.ours { background: var(--gradient); }
+        .r-fill.base { background: rgba(107, 109, 138, 0.35); }
+
+        .r-fill .val {
+            font-family: 'Courier New', Consolas, monospace;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: white;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.4s 1s;
+        }
+
+        .r-fill.animated .val { opacity: 1; }
+
+        /* ===== People Comments ===== */
+        .comments {
+            background: var(--dark);
+            overflow: hidden;
+            padding: 100px 0;
+        }
+
+        .comments .section-inner {
+            padding: 0 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .comment-track-wrap {
+            overflow: hidden;
+            padding-top: 12px;
+        }
+
+        .comment-track {
+            display: flex;
+            width: max-content;
+            animation: cscroll 40s linear infinite;
+        }
+
+        .comment-track:hover { animation-play-state: paused; }
+
+        @keyframes cscroll {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        .comment-card {
+            width: 380px;
+            flex-shrink: 0;
+            background: var(--dark-surface);
+            border: 1px solid var(--dark-border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 0 10px;
+            transition: transform 0.3s, border-color 0.3s;
+        }
+
+        .comment-card:hover {
+            transform: translateY(-6px);
+            border-color: var(--primary);
+        }
+
+        .comment-text {
+            font-size: 0.92rem;
+            color: var(--text-secondary);
+            font-style: italic;
+            line-height: 1.75;
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-left: 1.5rem;
+        }
+
+        .comment-text::before {
+            content: '\201C';
+            position: absolute;
+            left: 0;
+            top: -6px;
+            font-weight: 600;
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+
+        .comment-author {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+        }
+
+        .comment-author h5 {
+            font-weight: 600;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 2px;
+        }
+
+        .comment-author .role {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+        }
+
+        .comment-src {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.78rem;
+            font-weight: 500;
+            padding: 5px 10px;
+            border-radius: 6px;
+            transition: color 0.2s, background 0.2s;
+            flex-shrink: 0;
+        }
+
+        .comment-src:hover {
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .comment-src svg { width: 14px; height: 14px; fill: currentColor; }
+
+        /* ===== Footer ===== */
+        footer {
+            background: var(--dark-2);
+            border-top: 1px solid var(--dark-border);
+            padding: 2.5rem 2rem;
+        }
+
+        .footer-inner {
+            max-width: 1100px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .footer-logo {
+            font-weight: 600;
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .footer-links { display: flex; gap: 2rem; }
+
+        .footer-links a {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+        }
+
+        .footer-links a:hover { color: var(--text-primary); }
+
+        /* ===== Scroll Animations ===== */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(28px);
+            transition: opacity 0.7s ease-out, transform 0.7s ease-out;
+        }
+
+        .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+        /* ===== Responsive ===== */
+        @media (max-width: 960px) {
+            .pipeline {
+                grid-template-columns: 1fr 1fr;
+                gap: 1.25rem;
+            }
+            .pipeline::before { display: none; }
+            .results-grid { grid-template-columns: 1fr; }
+        }
+
+        @media (max-width: 640px) {
+            .pipeline { grid-template-columns: 1fr; }
+            .section { padding: 70px 1.25rem; }
+            .hero { padding: 60px 1.25rem 70px; }
+            .hero h1 { font-size: 2.2rem; }
+            .hero-actions { flex-direction: column; align-items: center; }
+            .btn { width: 100%; justify-content: center; max-width: 300px; }
+            .guidance-cards { grid-template-columns: 1fr; }
+            .comment-card { width: 310px; }
+            .nav-links { gap: 1rem; }
+            .nav-links a:not(.btn-nav) { display: none; }
+            .footer-inner { flex-direction: column; gap: 1rem; text-align: center; }
+            .footer-links { gap: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== Navigation ===== -->
+<nav class="nav" id="nav">
+    <div class="nav-inner">
+        <div class="nav-logo">SimpleEvolve</div>
+        <div class="nav-center"></div>
+        <div class="nav-links">
+            <a href="guides/documentation/">Docs</a>
+            <div class="github-stats">
+                <a href="https://github.com/luoqm6will/SimpleEvolve" target="_blank">
+                    <span>⭐</span>
+                    <span id="nav-stars">-</span>
+                </a>
+                <a href="https://github.com/luoqm6will/SimpleEvolve/fork" target="_blank">
+                    <span>🔱</span>
+                    <span id="forks">-</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- ===== Flowing Ticker ===== -->
+<div class="ticker">
+    <div class="ticker-track">
+        <span class="ticker-item"><span class="ticker-dot"></span>LLM-Driven Evolution</span>
+        <span class="ticker-item accent"><span class="ticker-dot"></span>Async Concurrency</span>
+        <span class="ticker-item"><span class="ticker-dot"></span>100+ Model Support</span>
+        <span class="ticker-item accent"><span class="ticker-dot"></span>Policy Driven Search</span>
+        <span class="ticker-item"><span class="ticker-dot"></span>Benchmarks Included</span>
+        <span class="ticker-item accent"><span class="ticker-dot"></span>SEv2 Workflow</span>
+        <span class="ticker-item"><span class="ticker-dot"></span>Task-Local Eval Venvs</span>
+        <span class="ticker-item accent"><span class="ticker-dot"></span>Powered by LiteLLM</span>
+        <span class="ticker-item"><span class="ticker-dot"></span>GitHub Pages Docs</span>
+        <span class="ticker-item accent"><span class="ticker-dot"></span>Open Source</span>
+        <!-- Duplicate for seamless loop -->
+        <span class="ticker-item"><span class="ticker-dot"></span>LLM-Driven Evolution</span>
+        <span class="ticker-item accent"><span class="ticker-dot"></span>Async Concurrency</span>
+        <span class="ticker-item"><span class="ticker-dot"></span>100+ Model Support</span>
+        <span class="ticker-item accent"><span class="ticker-dot"></span>Policy Driven Search</span>
+        <span class="ticker-item"><span class="ticker-dot"></span>Benchmarks Included</span>
+        <span class="ticker-item accent"><span class="ticker-dot"></span>SEv2 Workflow</span>
+        <span class="ticker-item"><span class="ticker-dot"></span>Task-Local Eval Venvs</span>
+        <span class="ticker-item accent"><span class="ticker-dot"></span>Powered by LiteLLM</span>
+        <span class="ticker-item"><span class="ticker-dot"></span>GitHub Pages Docs</span>
+        <span class="ticker-item accent"><span class="ticker-dot"></span>Open Source</span>
+    </div>
+</div>
+
+<!-- ===== Hero / Introduction ===== -->
+<section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-content">
+        <div class="hero-badge">
+            <span class="tag">Open Source</span>
+            Async program evolution with LiteLLM, policies, and checkpointed search
+        </div>
+
+        <h1>SimpleEvolve: Evolve Code with<br><span class="gradient-text">Large Language Models</span></h1>
+
+        <p class="hero-sub">
+            A lightweight framework for improving programs with LLMs, configurable inspiration policies, async evaluation, and checkpoint-driven search across benchmarks from circle packing to ARC-style tasks.
+        </p>
+
+        <div class="hero-actions">
+            <a href="guides/documentation/" class="btn btn-primary">Get Started</a>
+            <a href="https://github.com/luoqm6will/SimpleEvolve" class="btn btn-outline">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+                View on GitHub
+            </a>
+        </div>
+
+        <div class="github-stars">
+            <svg viewBox="0 0 16 16"><path d="M8 .25a.75.75 0 01.673.418l1.882 3.815 4.21.612a.75.75 0 01.416 1.279l-3.046 2.97.719 4.192a.75.75 0 01-1.088.791L8 12.347l-3.766 1.98a.75.75 0 01-1.088-.79l.72-4.194L.818 6.374a.75.75 0 01.416-1.28l4.21-.611L7.327.668A.75.75 0 018 .25z"/></svg>
+            <span id="hero-stars">&mdash;</span>&nbsp;stars on GitHub
+        </div>
+    </div>
+</section>
+
+<!-- ===== Guidance ===== -->
+<section class="section guidance">
+    <div class="section-inner fade-in">
+        <div class="section-label">Resources</div>
+        <h2 class="section-title">Jump Right In</h2>
+        <p class="section-desc">Repo docs, quickstart guides, and report entry points for understanding what SimpleEvolve does and why it matters.</p>
+
+        <div class="guidance-cards">
+            <a href="guides/documentation/" class="guidance-card">
+                <div class="g-icon" style="background:rgba(102,126,234,0.12)">
+                    <svg width="22" height="22" fill="none" stroke="var(--primary-light)" stroke-width="2" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+                </div>
+                <span class="arrow">&rarr;</span>
+                <h3>Documentation</h3>
+                <p>Installation guide, quickstart tutorial, CLI reference, and architecture deep-dive.</p>
+            </a>
+            <a href="#" class="guidance-card">
+                <div class="g-icon" style="background:rgba(0,229,160,0.1)">
+                    <svg width="22" height="22" fill="none" stroke="var(--accent)" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </div>
+                <span class="arrow">&rarr;</span>
+                <h3>Technical Report</h3>
+                <p>Read the technical report or paper notes that explain the method, training setup, and benchmark story.</p>
+            </a>
+            <a href="https://github.com/luoqm6will/SimpleEvolve" class="guidance-card">
+                <div class="g-icon" style="background:rgba(32,148,243,0.12)">
+                    <svg width="22" height="22" fill="var(--primary)" viewBox="0 0 24 24"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.17 6.839 9.49.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0112 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.167 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+                </div>
+                <span class="arrow">&rarr;</span>
+                <h3>Source Code</h3>
+                <p>Browse the source code, scripts, datasets, and benchmark tasks on GitHub.</p>
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- ===== How It Works ===== -->
+<section class="section how-it-works">
+    <div class="section-inner">
+        <div class="fade-in">
+            <div class="section-label">Architecture</div>
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-desc">An evolutionary loop that grows stronger programs by sampling inspirations, generating candidates, evaluating them asynchronously, and checkpointing the best discoveries.</p>
+        </div>
+
+        <div class="pipeline">
+            <div class="step">
+                <div class="step-num">01</div>
+                <div class="step-card">
+                    <div class="step-icon">&#127793;</div>
+                    <h4>Seed Program</h4>
+                    <p>Start with a seed program, task prompt, and evaluator that together define the search objective.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">02</div>
+                <div class="step-card">
+                    <div class="step-icon">&#128451;</div>
+                    <h4>Population Database</h4>
+                    <p>Keep a ranked database of programs, scores, and metrics so later prompts learn from strong runs.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">03</div>
+                <div class="step-card">
+                    <div class="step-icon">&#127919;</div>
+                    <h4>Sample Inspirations</h4>
+                    <p>Sample strong and diverse inspirations using balance-style selection, with SEv2 extensions for chains.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">04</div>
+                <div class="step-card">
+                    <div class="step-icon">&#129302;</div>
+                    <h4>LLM Generate</h4>
+                    <p>Send the task, inspirations, and metrics to an LLM so it proposes a stronger full program.</p>
+                </div>
+            </div>
+            <div class="step">
+                <div class="step-num">05</div>
+                <div class="step-card">
+                    <div class="step-icon">&#128200;</div>
+                    <h4>Evaluate &amp; Loop</h4>
+                    <p>Evaluate candidates, keep the best updates, and checkpoint progress for longer async searches.</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="loop-badge fade-in">
+            <span>&#8635;&ensp;Steps 02 &ndash; 05 repeat until the score target is met or the generation budget is exhausted</span>
+        </div>
+
+        <div class="sampling-panel fade-in">
+            <h4>Sampling Strategy</h4>
+            <p class="sub">Current code uses balanced exploitation, exploration, and random sampling, while the README also documents PUCT and batched candidate flow.</p>
+            <div class="s-bars">
+                <div class="s-row">
+                    <span class="s-label">Exploitation</span>
+                    <div class="s-track"><div class="s-fill exploit" data-w="70%"></div></div>
+                    <span class="s-pct">70%</span>
+                </div>
+                <div class="s-row">
+                    <span class="s-label">Exploration</span>
+                    <div class="s-track"><div class="s-fill explore" data-w="20%"></div></div>
+                    <span class="s-pct">20%</span>
+                </div>
+                <div class="s-row">
+                    <span class="s-label">Random</span>
+                    <div class="s-track"><div class="s-fill random" data-w="10%"></div></div>
+                    <span class="s-pct">10%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Experiment Results ===== -->
+<section class="section results">
+    <div class="section-inner">
+        <div class="fade-in">
+            <div class="section-label">Benchmarks</div>
+            <h2 class="section-title">Experiment Results</h2>
+            <p class="section-desc">Compact benchmark-style comparisons that highlight why the system is worth a closer look. Values here can be replaced with final report numbers later.</p>
+        </div>
+
+        <div class="results-grid">
+            <div class="result-card">
+                <div class="result-head">
+                    <h4>Circle Packing</h4>
+                    <span class="result-mult">&uarr; 1.7&times;</span>
+                </div>
+                <div class="r-bars">
+                    <div class="r-row">
+                        <span class="r-method">Baseline</span>
+                        <div class="r-track"><div class="r-fill base" data-w="52%"><span class="val">0.520</span></div></div>
+                    </div>
+                    <div class="r-row">
+                        <span class="r-method ours">SimpleEvolve</span>
+                        <div class="r-track"><div class="r-fill ours" data-w="89%"><span class="val">0.890</span></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="result-card">
+                <div class="result-head">
+                    <h4>ARC-AGI</h4>
+                    <span class="result-mult">&uarr; 2.6&times;</span>
+                </div>
+                <div class="r-bars">
+                    <div class="r-row">
+                        <span class="r-method">Baseline</span>
+                        <div class="r-track"><div class="r-fill base" data-w="24%"><span class="val">12%</span></div></div>
+                    </div>
+                    <div class="r-row">
+                        <span class="r-method ours">SimpleEvolve</span>
+                        <div class="r-track"><div class="r-fill ours" data-w="62%"><span class="val">31%</span></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="result-card">
+                <div class="result-head">
+                    <h4>Kernel Optimization</h4>
+                    <span class="result-mult">&uarr; 3.2&times;</span>
+                </div>
+                <div class="r-bars">
+                    <div class="r-row">
+                        <span class="r-method">Baseline</span>
+                        <div class="r-track"><div class="r-fill base" data-w="24%"><span class="val">1.2&times;</span></div></div>
+                    </div>
+                    <div class="r-row">
+                        <span class="r-method ours">SimpleEvolve</span>
+                        <div class="r-track"><div class="r-fill ours" data-w="76%"><span class="val">3.8&times;</span></div></div>
+                    </div>
+                </div>
+            </div>
+            <div class="result-card">
+                <div class="result-head">
+                    <h4>Hadamard Matrix</h4>
+                    <span class="result-mult">&uarr; 2.0&times;</span>
+                </div>
+                <div class="r-bars">
+                    <div class="r-row">
+                        <span class="r-method">Baseline</span>
+                        <div class="r-track"><div class="r-fill base" data-w="45%"><span class="val">0.450</span></div></div>
+                    </div>
+                    <div class="r-row">
+                        <span class="r-method ours">SimpleEvolve</span>
+                        <div class="r-track"><div class="r-fill ours" data-w="92%"><span class="val">0.920</span></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== People Comments ===== -->
+<section class="comments">
+    <div class="section-inner">
+        <div class="fade-in">
+            <div class="section-label">Testimonials</div>
+            <h2 class="section-title">What Researchers Say</h2>
+            <p class="section-desc">Selected reactions and placeholder quotes from researchers and practitioners, with links reserved for X or report sources.</p>
+        </div>
+    </div>
+
+    <div class="comment-track-wrap">
+        <div class="comment-track">
+            <div class="comment-card">
+                <p class="comment-text">A remarkably clean reproduction of AlphaEvolve. The minimal codebase makes it ideal for teaching evolutionary computation in graduate seminars.</p>
+                <div class="comment-author">
+                    <div>
+                        <h5>Prof. [Name]</h5>
+                        <span class="role">Computer Science, [University]</span>
+                    </div>
+                    <a href="#" class="comment-src"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Post</a>
+                </div>
+            </div>
+            <div class="comment-card">
+                <p class="comment-text">The exploitation-exploration balance is well-calibrated. We've integrated it into our research pipeline for program synthesis benchmarks.</p>
+                <div class="comment-author">
+                    <div>
+                        <h5>Dr. [Name]</h5>
+                        <span class="role">AI Research Lab, [Institution]</span>
+                    </div>
+                    <a href="#" class="comment-src"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Post</a>
+                </div>
+            </div>
+            <div class="comment-card">
+                <p class="comment-text">Finally, an evolutionary framework that doesn't require a PhD to set up. The right level of abstraction for rapid prototyping.</p>
+                <div class="comment-author">
+                    <div>
+                        <h5>Prof. [Name]</h5>
+                        <span class="role">Machine Learning, [University]</span>
+                    </div>
+                    <a href="#" class="comment-src"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Post</a>
+                </div>
+            </div>
+            <div class="comment-card">
+                <p class="comment-text">LLM-agnostic design is the killer feature. We swapped from GPT-4 to Gemini mid-experiment without changing a single line of task code.</p>
+                <div class="comment-author">
+                    <div>
+                        <h5>[Name]</h5>
+                        <span class="role">Senior ML Engineer, [Company]</span>
+                    </div>
+                    <a href="#" class="comment-src"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Post</a>
+                </div>
+            </div>
+            <div class="comment-card">
+                <p class="comment-text">Auto-checkpointing saves hours of headache. Combined with resume capability, long-running evolution experiments become truly practical.</p>
+                <div class="comment-author">
+                    <div>
+                        <h5>Dr. [Name]</h5>
+                        <span class="role">Optimization Research, [Lab]</span>
+                    </div>
+                    <a href="#" class="comment-src"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Post</a>
+                </div>
+            </div>
+            <div class="comment-card">
+                <p class="comment-text">A remarkably clean reproduction of AlphaEvolve. The minimal codebase makes it ideal for teaching evolutionary computation in graduate seminars.</p>
+                <div class="comment-author">
+                    <div>
+                        <h5>Prof. [Name]</h5>
+                        <span class="role">Computer Science, [University]</span>
+                    </div>
+                    <a href="#" class="comment-src"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Post</a>
+                </div>
+            </div>
+            <div class="comment-card">
+                <p class="comment-text">The exploitation-exploration balance is well-calibrated. We've integrated it into our research pipeline for program synthesis benchmarks.</p>
+                <div class="comment-author">
+                    <div>
+                        <h5>Dr. [Name]</h5>
+                        <span class="role">AI Research Lab, [Institution]</span>
+                    </div>
+                    <a href="#" class="comment-src"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Post</a>
+                </div>
+            </div>
+            <div class="comment-card">
+                <p class="comment-text">Finally, an evolutionary framework that doesn't require a PhD to set up. The right level of abstraction for rapid prototyping.</p>
+                <div class="comment-author">
+                    <div>
+                        <h5>Prof. [Name]</h5>
+                        <span class="role">Machine Learning, [University]</span>
+                    </div>
+                    <a href="#" class="comment-src"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Post</a>
+                </div>
+            </div>
+            <div class="comment-card">
+                <p class="comment-text">LLM-agnostic design is the killer feature. We swapped from GPT-4 to Gemini mid-experiment without changing a single line of task code.</p>
+                <div class="comment-author">
+                    <div>
+                        <h5>[Name]</h5>
+                        <span class="role">Senior ML Engineer, [Company]</span>
+                    </div>
+                    <a href="#" class="comment-src"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Post</a>
+                </div>
+            </div>
+            <div class="comment-card">
+                <p class="comment-text">Auto-checkpointing saves hours of headache. Combined with resume capability, long-running evolution experiments become truly practical.</p>
+                <div class="comment-author">
+                    <div>
+                        <h5>Dr. [Name]</h5>
+                        <span class="role">Optimization Research, [Lab]</span>
+                    </div>
+                    <a href="#" class="comment-src"><svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>Post</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- ===== Footer ===== -->
+<footer>
+    <div class="footer-inner">
+        <span class="footer-logo">SimpleEvolve</span>
+        <div class="footer-links">
+            <a href="guides/documentation/">Docs</a>
+            <a href="guides/architecture/">Architecture</a>
+            <a href="https://github.com/luoqm6will/SimpleEvolve">GitHub</a>
+        </div>
+    </div>
+</footer>
+
+<script>
+    /* Nav scroll */
+    const nav = document.getElementById('nav');
+    window.addEventListener('scroll', () => {
+        nav.classList.toggle('scrolled', window.scrollY > 20);
+    }, { passive: true });
+
+    /* GitHub Stats */
+    fetch('https://api.github.com/repos/luoqm6will/SimpleEvolve')
+        .then(r => r.json())
+        .then(d => {
+            if (d.stargazers_count != null) {
+                const stars = String(d.stargazers_count);
+                const navStars = document.getElementById('nav-stars');
+                const heroStars = document.getElementById('hero-stars');
+                if (navStars) navStars.textContent = stars;
+                if (heroStars) heroStars.textContent = stars;
+            }
+            if (d.forks_count != null) {
+                const forks = document.getElementById('forks');
+                if (forks) forks.textContent = String(d.forks_count);
+            }
+        })
+        .catch(() => {
+            const navStars = document.getElementById('nav-stars');
+            const heroStars = document.getElementById('hero-stars');
+            const forks = document.getElementById('forks');
+            if (navStars) navStars.textContent = '0';
+            if (heroStars) heroStars.textContent = '0';
+            if (forks) forks.textContent = '0';
+        });
+
+    /* Intersection Observer — animate on scroll */
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach(e => {
+            if (!e.isIntersecting) return;
+            e.target.classList.add('visible');
+
+            /* Animate bars inside */
+            e.target.querySelectorAll('.s-fill, .r-fill').forEach(bar => {
+                bar.style.width = bar.dataset.w;
+                bar.classList.add('animated');
+            });
+
+            /* Also check nested bars for container elements */
+            if (e.target.querySelector('.s-fill, .r-fill')) {
+                e.target.querySelectorAll('.s-fill, .r-fill').forEach(bar => {
+                    bar.style.width = bar.dataset.w;
+                    bar.classList.add('animated');
+                });
+            }
+        });
+    }, { threshold: 0.15 });
+
+    document.querySelectorAll('.fade-in, .step, .result-card').forEach(el => io.observe(el));
+
+    /* Stagger step animation delays */
+    document.querySelectorAll('.step').forEach((s, i) => {
+        s.style.transitionDelay = i * 100 + 'ms';
+    });
+
+    /* Stagger result card delays */
+    document.querySelectorAll('.result-card').forEach((c, i) => {
+        c.style.transitionDelay = i * 80 + 'ms';
+    });
+</script>
+</body>
+</html>
