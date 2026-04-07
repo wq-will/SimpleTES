@@ -2,4 +2,5 @@
 site-app/.npm-cache/
 site-app/node_modules/
 site-app/dist/
+site-app/*.tsbuildinfo
 site/

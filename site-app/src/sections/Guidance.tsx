@@ -5,12 +5,14 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const withBase = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
+
 const guidanceItems = [
   {
     icon: BookOpen,
     title: 'Documentation',
     description: 'Installation guide, quickstart tutorial, CLI reference, and architecture deep-dive.',
-    href: 'https://github.com/luoqm6will/SimpleEvolve#readme',
+    href: withBase('guides/documentation/'),
   },
   {
     icon: FileText,

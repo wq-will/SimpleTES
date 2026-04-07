@@ -121,7 +121,7 @@ export function HowItWorks() {
           {/* Connecting line - desktop only */}
           <div
             ref={lineRef}
-            className="hidden lg:block absolute top-12 left-[10%] right-[10%] h-0.5 
+            className="hidden lg:block absolute top-6 left-[10%] right-[10%] h-0.5 
                        bg-gradient-to-r from-cyan-500/20 via-cyan-400/40 to-cyan-500/20 origin-left z-0"
             style={{ transform: 'scaleX(0)' }}
           />
@@ -132,7 +132,7 @@ export function HowItWorks() {
               <div key={index} className="relative group">
                 {/* Step number */}
                 <div
-                  className="w-12 h-12 rounded-full bg-cyan-500 flex items-center justify-center mb-6 mx-auto lg:mx-0
+                  className="w-12 h-12 rounded-full bg-cyan-500 flex items-center justify-center mb-6 mx-auto
                              group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-cyan-500/30
                              transition-all duration-300"
                 >

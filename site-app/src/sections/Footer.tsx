@@ -1,7 +1,9 @@
 import { Github, BookOpen, MessageCircle } from 'lucide-react';
 
+const withBase = (path: string) => `${import.meta.env.BASE_URL}${path.replace(/^\//, '')}`;
+
 const footerLinks = [
-  { label: 'Docs', href: 'https://github.com/luoqm6will/SimpleEvolve#readme', icon: BookOpen },
+  { label: 'Docs', href: withBase('guides/documentation/'), icon: BookOpen },
   { label: 'GitHub', href: 'https://github.com/luoqm6will/SimpleEvolve', icon: Github },
   { label: 'Issues', href: 'https://github.com/luoqm6will/SimpleEvolve/issues', icon: MessageCircle },
 ];
