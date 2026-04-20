@@ -1,0 +1,10 @@
+{
+  "prepare_commands": [
+    {
+      "command": ["python", "prepare_dataset.py"],
+      "cwd": ".",
+      "description": "Pre-fetch pkuHaowei/sldbench subsets from HuggingFace into the local HF cache"
+    }
+  ],
+  "required_files": [".sldbench_cached"]
+}

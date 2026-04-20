@@ -1,0 +1,146 @@
+You are a world-class algorithm engineer, and you are very good at programming. 
+Now, you are participating in a programming contest. You are asked to solve a heuristic problem, known as an NP-hard problem. Here is the problem statement:
+
+Story
+--------
+Takahashi is a skilled purse seine fisher.
+His fishing boat is equipped with state-of-the-art sonar, allowing him to accurately determine the positions of fish within the fishing area.
+Additionally, the boat is capable of high-speed movement, enabling him to assume that fish remain stationary while he sets up the fishing net.
+
+The fishing method involves using the boat to deploy nets and form a closed polygon, capturing the fish within the enclosed area.
+To optimize efficiency, each edge of the polygon formed by the nets must be aligned either parallel to the east-west or north-south direction.
+Furthermore, due to the limited length of the nets equipped on the boat, the polygon must be constructed within these constraints.
+
+The fishing area contains two types of fish: mackerels and sardines.
+For resource conservation reasons, sardines are currently prohibited from being caught in this fishing area.
+Any sardines caught in the net must be released back into the sea.
+Because this process is labor-intensive, Takahashi should focus on maximizing the catch of mackerel while avoiding sardines as much as possible.
+
+
+Problem Statement
+--------
+There are $N$ mackerels and $N$ sardines on a two-dimensional plane.
+Construct a polygon that satisfies the following conditions and maximize the value obtained by subtracting the total number of sardines inside the polygon from the total number of mackerels inside it.
+Note that any points lying on the edges of the polygon are considered to be inside the polygon.
+
+### Conditions
+1. The number of vertices in the polygon must not exceed $1000$, and the total length of its edges must not exceed $4 \times 10^5$.
+2. The coordinates of each vertex $(x, y)$ must be integers satisfying $0 \leq x, y \leq 10^5$.
+3. Each edge of the polygon must be parallel to either the $x$-axis or the $y$-axis.
+4. The polygon must not self-intersect: non-adjacent edges must not share any points, and adjacent edges must only meet at their endpoints.
+
+
+Scoring
+--------
+Let $a$ be the total number of mackerels inside the polygon and $b$ be the total number of sardines inside the polygon.
+Then, you will obtain the score of $\max(0, a - b + 1)$.
+
+There are $150$ test cases, and the score of a submission is the total score for each test case.
+If your submission produces an illegal output or exceeds the time limit for some test cases, the submission itself will be judged as WA or TLE, and the score of the submission will be zero.
+The highest score obtained during the contest will determine the final ranking, and there will be no system test after the contest.
+If more than one participant gets the same score, they will be ranked in the same place regardless of the submission time.
+
+
+Input
+--------
+Input is given from Standard Input in the following format:
+~~~
+$N$
+$x_0$ $y_0$
+$\vdots$
+$x_{2N-1}$ $y_{2N-1}$
+~~~
+
+- In all test cases, the number of mackerels and sardines, $N$, is fixed at $5000$.
+- For each $i = 0, 1, \dots, N-1$, $(x_i, y_i)$ represents the coordinates of the $i$-th mackerel.
+- For each $i = 0, 1, \dots, N-1$, $(x_{N+i}, y_{N+i})$ represents the coordinates of the $i$-th sardine.
+- Each coordinate $(x_i, y_i)$ satisfies $0 \leq x_i, y_i \leq 10^5$, and all coordinates are distinct.
+
+
+Output
+--------
+Let the number of vertices in the polygon be $m$ ($4 \leq m \leq 1000$), and let $(a_i, b_i)$ denote the coordinates of the $i$-th vertex.
+Then, output to Standard Output in the following format:
+~~~
+$m$
+$a_0$ $b_0$
+$\vdots$
+$a_{m-1}$ $b_{m-1}$
+~~~
+
+The output vertices do not necessarily need to form the actual corners of the polygon.
+In other words, three consecutive vertices $(a_i, b_i), (a_{i+1}, b_{i+1}), (a_{i+2}, b_{i+2})$ may lie on a straight line.
+However, all vertices must have distinct coordinates.
+
+The vertices can be output in either clockwise or counterclockwise order.
+
+Your program may output multiple solutions.
+If multiple solutions are output, only the last one is used for scoring.
+
+================================================================================
+CODE STRUCTURE
+================================================================================
+
+The evolve block contains a single Python variable CPP_CODE which holds the
+entire C++ program as a triple-quoted string:
+
+# EVOLVE-BLOCK-START
+CPP_CODE = '''
+#include <iostream>
+...
+int main() {
+    ...
+    return 0;
+}
+'''
+# EVOLVE-BLOCK-END
+
+IMPORTANT: The CPP_CODE variable must contain the complete, compilable C++ program.
+Do not include any Python logic in the evolve block other than the CPP_CODE assignment.
+
+================================================================================
+RULES
+================================================================================
+
+1. ESCAPE SEQUENCES: Inside the Python triple-quoted string, you MUST write \\n
+   (double backslash n) for C++ newline characters. For example:
+       std::cout << result << "\\n";
+   NOT:
+       std::cout << result << "\n";
+   Using a literal \n causes the tester to see one long line instead of separate
+   lines — this causes a Parse error and scores zero for ALL 150 test cases.
+
+2. EVOLVE BLOCK MARKERS: You MUST include the exact markers:
+       # EVOLVE-BLOCK-START
+       CPP_CODE = '''
+       ...your C++ code...
+       '''
+       # EVOLVE-BLOCK-END
+
+3. COMPLETE CODE: The C++ program must be fully self-contained. If you reference
+   a function or variable, it MUST be defined in the code. Do not remove functions
+   or global variables that are used elsewhere in the program.
+
+4. INCLUDES: Always use #include <bits/stdc++.h> or include ALL necessary headers.
+
+5. OUTPUT FORMAT: The program must output exactly:
+       m
+       a_0 b_0
+       ...
+       a_{m-1} b_{m-1}
+   Every test case must produce valid output. If ANY of 150 test cases fails,
+   the TOTAL score is zero.
+
+6. SEARCH REQUIRED: The program MUST implement a time-based search loop that
+   actively improves the polygon until the time limit is reached. A static, 
+   greedy-only, or hardcoded solution (such as outputting a fixed rectangle)
+   is NOT acceptable and will score near zero. The official time limit is 2.0 seconds.
+   The safety margin on time limit must be at least 0.05 seconds. 
+
+================================================================================
+PERFORMANCE TARGET
+================================================================================
+
+Target average score per test case: 5000
+The best solution will make efficient use of the entire 2.0 second time limit
+without exceeding it. Think outside the box.

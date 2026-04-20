@@ -1,0 +1,32 @@
+In additive combinatorics, for a finite set of integers A, define
+
+- Sumset: A + A = {a + b : a, b in A}
+- Difference set: A - A = {a - b : a, b in A}
+
+We want a strong lower bound for the smallest constant C such that for all finite A subset Z:
+
+|A + A| / |A| <= (|A - A| / |A|)^C
+
+For a candidate set A, the evaluator computes
+
+C(A) = log(|A + A| / |A|) / log(|A - A| / |A|)
+
+and maximizes C(A).
+
+Output requirements:
+1. A must be a finite set of integers.
+2. 2 <= |A| <= 512 after deduplication.
+3. Every element must be in [-1_000_000, 1_000_000].
+
+Program interface:
+- Implement run_code().
+- run_code() may return either:
+  - (A, claimed_c), where A is an iterable of integers and claimed_c is a float, or
+  - A alone.
+
+The evaluator recomputes |A+A|, |A-A|, and C(A) from A; reported values cannot be faked.
+The final reward is combined_score = C(A) for valid outputs.
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+
+The time limit for each program evaluation is 180 seconds.

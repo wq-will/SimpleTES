@@ -1,0 +1,4 @@
+Pack 31 circles in a unit square to maximize the sum of their radii.
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+The time limit for each program evaluation is 530 seconds.

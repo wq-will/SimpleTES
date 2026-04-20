@@ -1,0 +1,39 @@
+Discover a scaling law function that models the relationship between domain mixture proportions and multi-domain loss values across different model sizes.
+
+**IMPORTANT: The scaling law function must use no more than 35 parameters.**
+
+Focus on mathematical accuracy across different model sizes, cross-domain generalization, parameter efficiency (simple forms that can be fitted with limited data), and numerical/theoretical stability.
+
+**DATA CHARACTERISTICS**
+- Features: Domain proportions (5 domains) - array of shape (n_mixtures, 5)
+- Labels: Multi-domain losses (5 domains) - array of shape (n_mixtures, 5)
+- Dataset size: 80 training (20 per model size)
+- Model parameter sizes: 70M, 160M, 410M, 1B parameters (4 separate groups)
+- Domain proportions: Each row sums to 1.0 (mixture weights)
+- Loss ranges: Domain losses span 1.8-4.2 cross-entropy loss
+- Mixture configurations: Systematic exploration of different domain weight combinations
+- This is a multi-output regression problem with correlated domain performances
+
+The function signatures must remain:
+
+```python
+def scaling_law_func(data_points, params):
+    # data_points: (N,5) array with domain proportions for 5 domains
+    # proportions: Array of domain mixture proportions
+    # params: Array of up to 35 parameters
+    # Returns: Predicted multi-domain loss values (N,5)
+
+def fit_scaling_law(data_points, loss_values):
+    # data_points: (N,5) array with domain proportions for 5 domains
+    # loss_values: Array of corresponding multi-domain losses (N,5)
+    # Returns: Optimized parameters (up to 35 parameters)
+```
+
+Write all improvements between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END markers.
+
+You are not allowed to use input-dependent features in scaling_law_func, e.g., median / min / max / etc.
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+
+The time limit for each program evaluation is 600 seconds.
+

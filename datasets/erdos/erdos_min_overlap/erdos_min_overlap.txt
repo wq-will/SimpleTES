@@ -1,0 +1,16 @@
+Find a step function h: [0, 2] → [0, 1] that **minimizes** the overlap integral:
+
+$$C_5 = \\max_k \\int h(x)(1 - h(x+k)) dx$$
+
+**Constraints**:
+1. h(x) ∈ [0, 1] for all x
+2. ∫₀² h(x) dx = 1
+
+**Discretization**: Represent h as n_points samples over [0, 2].
+With dx = 2.0 / n_points:
+- 0 ≤ h[i] ≤ 1 for all i
+- sum(h) * dx = 1 (equivalently: sum(h) == n_points / 2 exactly)
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+
+The time limit for each program evaluation is 1100 seconds.

@@ -1,0 +1,7 @@
+Construct a non-negative function f on [-1/4, 1/4] to maximize
+
+R(f) = ‖f * f‖₂² / (‖f * f‖₁ · ‖f * f‖∞), with C₂ ≥ R(f) and target R(f) > 0.97.
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+
+The time limit for each program evaluation is 1100 seconds.

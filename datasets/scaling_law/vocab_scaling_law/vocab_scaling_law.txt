@@ -1,0 +1,47 @@
+Discover a scaling law function that models the relationship between vocabulary size, non-vocabulary parameters, number of characters and Lossu (unigram-normalized language model loss).
+
+**IMPORTANT: The scaling law function must use no more than 7 parameters.**
+
+Focus on mathematical accuracy across different vocabulary configurations, cross-dataset generalization, parameter efficiency (simple forms that can be fitted with limited data), and numerical/theoretical stability.
+
+**DATA CHARACTERISTICS**
+- Features: [non_vocab_parameters, vocab_size, num_characters] - 3D input
+- Labels: unigram_normalized_loss - scalar output
+- Dataset size: 1080 
+- Vocabulary size: 4096 to 96256 tokens (8 distinct sizes)
+- Embedding dimension: 512 to 2048 dimensions (4 values)
+- Character count: 1e8 to 5e12 characters (100M to 5T characters)
+- Non-vocab parameters: 3.3e7 to 1.1e9 (33M to 1.1B parameters)
+- FLOPs range: 1.3e16 to 4.4e20 operations
+- Lossu range: -5.34 to -0.51 (negative values indicate improvement over unigram)
+- Lossu measures improvement over context-free unigram model (negative = better)
+- Explores vocabulary scaling trade-offs across parameter, data, and architecture dimensions
+
+The function signatures must remain:
+
+```python
+def scaling_law_func(data_points, params):
+    # data_points: (N,3) array with columns [P_non_vocab, vocab_size, num_characters]
+    # Non_vocab_parameters: Array of non-vocabulary parameter counts
+    # vocab_size: Array of vocabulary sizes
+    # num_characters: Array of number of characters processed
+    # params: Array of up to 7 parameters
+    # Returns: Predicted Lossu values
+
+def fit_scaling_law(data_points, loss_values):
+    # data_points: (N,3) array with columns [P_non_vocab, vocab_size, num_characters]
+    # Non_vocab_parameters: Array of non-vocabulary parameter counts
+    # vocab_size: Array of vocabulary sizes
+    # num_characters: Array of number of characters processed
+    # lossu_values: Array of corresponding Lossu values
+    # Returns: Optimized parameters (up to 7 parameters)
+```
+
+Write all improvements between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END markers.
+
+You are not allowed to use input-dependent features in scaling_law_func, e.g., median / min / max / etc.
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+
+The time limit for each program evaluation is 600 seconds.
+

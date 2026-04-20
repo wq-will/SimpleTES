@@ -1,0 +1,193 @@
+You are an expert Triton engineer tasked with translating PyTorch code into highly optimized Triton kernel code.
+---
+1. Problem Definition
+1.1 Task Description
+You will be implementing a cumulative sum (prefix sum / scan) kernel, a computation pattern commonly found in scientific computing, numerical workloads, and machine learning systems. In this task, the operator computes the inclusive cumulative sum of the input tensor along a specified dimension.
+
+Your task is to implement this operation using Triton kernel code and optimize it for end-to-end latency on GPU. The implementation should preserve the same public PyTorch model interface.
+
+You may use any precision format and fully leverage the GPU hardware units for optimization, as long as output error stays below the required tolerance. (absolute tolerance: 0.01, relative tolerance: 0.01)
+
+1.2 Task Reference Implementation
+Here is a pytorch implementation. You will want to implement a kernel for the operations in the forward call:
+
+# EVOLVE-BLOCK-START
+from utils import make_match_reference
+from typing import Tuple
+
+import torch
+from torch import nn
+
+def custom_kernel(data: Tuple[torch.Tensor, int]) -> torch.Tensor:
+    x, dim = data
+    # Your optimized implementation
+
+class Model(nn.Module):
+    def __init__(self, dim: int):
+        super().__init__()
+        self.dim = dim
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return torch.cumsum(x, dim=self.dim)
+
+
+def ref_kernel(data: Tuple[torch.Tensor, int]) -> torch.Tensor:
+    x, dim = data
+    model = Model(dim).to(x.device)
+    return model(x)
+
+1.3 Input/Output Specification
+Tensor
+| Tensor | Shape | Dtype | Layout |
+|--------|-------|-------|--------|
+| input  | task-specific | float32 | contiguous, row-major |
+| output | task-specific | float32 | contiguous |
+
+---
+
+2. Hardware Specification
+2.1 GPU Model
+NVIDIA H200 141GB
+
+2.2 Key Hardware Parameters
+| Parameter              | Value    |
+|------------------------|----------|
+| SM Count               | 132      |
+| Max Threads per Block  | 1024     |
+| Registers per SM Count |   65536 |
+| Shared Memory per SM   | 228 KB   |
+| L2 Cache Size          | 50 MB    |
+| Memory Bandwidth       | 4.8 TB/s |
+| FP32 Peak             | 67 TFLOPS    |
+| TF32 Tensor Core Peak | 989 TFLOPS   |
+| FP16 Tensor Core Peak | 1,979 TFLOPS |
+| BF16 Tensor Core Peak | 1,979 TFLOPS |
+| FP8 Tensor Core Peak  | 3,958 TFLOPS |
+
+---
+
+3. Implementation Guidelines
+3.1 Triton version
+Use Triton 3.4.0 style APIs and write kernels that are easy to autotune. Example Triton 3.4.0 autotune pattern (persistent matmul):
+
+```python
+@triton.autotune(
+    configs=matmul_get_configs(),
+    key=["M", "N", "K"],
+)
+@triton.jit(launch_metadata=_matmul_launch_metadata)
+def matmul_kernel_persistent(a_ptr, b_ptr, c_ptr,  #
+                             M, N, K,  #
+                             stride_am, stride_ak,  #
+                             stride_bk, stride_bn,  #
+                             stride_cm, stride_cn,  #
+                             BLOCK_SIZE_M: tl.constexpr,  #
+                             BLOCK_SIZE_N: tl.constexpr,  #
+                             BLOCK_SIZE_K: tl.constexpr,  #
+                             GROUP_SIZE_M: tl.constexpr,  #
+                             NUM_SMS: tl.constexpr,  #
+                             ):
+    start_pid = tl.program_id(axis=0)
+    num_pid_m = tl.cdiv(M, BLOCK_SIZE_M)
+    num_pid_n = tl.cdiv(N, BLOCK_SIZE_N)
+    k_tiles = tl.cdiv(K, BLOCK_SIZE_K)
+    num_tiles = num_pid_m * num_pid_n
+
+    # NOTE: There is currently a bug in blackwell pipelining that means it can't handle a value being
+    # used in both the prologue and epilogue, so we duplicate the counters as a work-around.
+    tile_id_c = start_pid - NUM_SMS
+
+    offs_k_for_mask = tl.arange(0, BLOCK_SIZE_K)
+    num_pid_in_group = GROUP_SIZE_M * num_pid_n
+
+    for tile_id in tl.range(start_pid, num_tiles, NUM_SMS, flatten=True):
+        pid_m, pid_n = _compute_pid(tile_id, num_pid_in_group, num_pid_m, GROUP_SIZE_M, NUM_SMS)
+        start_m = pid_m * BLOCK_SIZE_M
+        start_n = pid_n * BLOCK_SIZE_N
+        offs_am = start_m + tl.arange(0, BLOCK_SIZE_M)
+        offs_bn = start_n + tl.arange(0, BLOCK_SIZE_N)
+        offs_am = tl.where(offs_am < M, offs_am, 0)
+        offs_bn = tl.where(offs_bn < N, offs_bn, 0)
+        offs_am = tl.max_contiguous(tl.multiple_of(offs_am, BLOCK_SIZE_M), BLOCK_SIZE_M)
+        offs_bn = tl.max_contiguous(tl.multiple_of(offs_bn, BLOCK_SIZE_N), BLOCK_SIZE_N)
+
+        accumulator = tl.zeros((BLOCK_SIZE_M, BLOCK_SIZE_N), dtype=tl.float32)
+        for ki in range(k_tiles):
+            offs_k = ki * BLOCK_SIZE_K + tl.arange(0, BLOCK_SIZE_K)
+            a_ptrs = a_ptr + (offs_am[:, None] * stride_am + offs_k[None, :] * stride_ak)
+            b_ptrs = b_ptr + (offs_k[:, None] * stride_bk + offs_bn[None, :] * stride_bn)
+
+            a = tl.load(a_ptrs, mask=offs_k_for_mask[None, :] < K - ki * BLOCK_SIZE_K, other=0.0)
+            b = tl.load(b_ptrs, mask=offs_k_for_mask[:, None] < K - ki * BLOCK_SIZE_K, other=0.0)
+            accumulator = tl.dot(a, b, accumulator)
+
+        tile_id_c += NUM_SMS
+        pid_m, pid_n = _compute_pid(tile_id_c, num_pid_in_group, num_pid_m, GROUP_SIZE_M, NUM_SMS)
+        offs_cm = pid_m * BLOCK_SIZE_M + tl.arange(0, BLOCK_SIZE_M)
+        offs_cn = pid_n * BLOCK_SIZE_N + tl.arange(0, BLOCK_SIZE_N)
+        c_ptrs = c_ptr + stride_cm * offs_cm[:, None] + stride_cn * offs_cn[None, :]
+        c_mask = (offs_cm[:, None] < M) & (offs_cn[None, :] < N)
+        if (c_ptr.dtype.element_ty == tl.float8e4nv):
+            c = accumulator.to(tl.float8e4nv)
+        else:
+            c = accumulator.to(tl.float16)
+        tl.store(c_ptrs, c, mask=c_mask)
+```
+
+3.2 General Optimization Tips
+You are operating in an iterative evolution loop, not a one-shot rewrite setting. The objective is to produce reliable descendants that improve end-to-end geomean, while preserving correctness and stability.
+In this setting, each candidate should be treated as a careful refinement of the strong known implementation, not a fresh redesign. The goal is to improve end-to-end geomean, so each iteration should focus on a single optimization theme (for example, launch tuning, local fusion, layout cleanup, or reducing one materialization point). This keeps the search signal clean and makes it easier to identify which change actually improved performance.
+
+The optimization priority should be practical: first improve dataflow efficiency by removing unnecessary memory movement (extra reads/writes, transient tensors, avoidable layout conversions), then optimize compute-heavy regions with context awareness. In particular, dominant contraction-like stages should be treated differently from surrounding elementwise and reduction code, and producer/consumer efficiency should usually be improved before replacing mature backend primitives.
+
+To control regressions, apply changes with a risk ladder—low-risk tuning first, medium-risk structural edits next, and high-risk rewrites only when progress stalls. Throughout the process, preserve exact semantics across all required input regimes and maintain numerically stable behavior in reduction-sensitive paths.
+
+
+3.3 A few general triton tips:
+- tl.arange only takes in constexpr arguments (static or tl.constexpr)
+- You cannot use continue in your kernel code
+- tl.dot can only take in two input tensors
+- There is no tl.mean
+
+---
+
+4. Testing Requirements
+The following configurations provide example problem setups used in performance testing:
+
+- {"name":"a","batch_size":32768,"input_shape":[32768],"dim":1,"seed":17717}
+
+The score is the reciprocal of the geometric mean across several settings, and a higher score indicates better performance.
+
+---
+
+5. Output Format
+
+Your response must consist of one and only one complete, self-contained Python file. Start with `#EVOLVE-BLOCK-START` and end with `#EVOLVE-BLOCK-END`.
+
+You can write custom_kernel and optimized kernel as follows:
+
+# EVOLVE-BLOCK-START
+import torch
+from torch import nn
+import triton
+import triton.language as tl
+from utils import make_match_reference, DisableCuDNNTF32
+from typing import TypedDict, TypeVar, Tuple, Dict
+
+# Your Triton kernel code here
+
+def custom_kernel(data: Tuple[torch.Tensor, int]) -> torch.Tensor:
+    # Your optimized implementation
+
+# EVOLVE-BLOCK-END
+
+---
+
+Important:
+- Return one and only one complete Python file between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- Preserve `custom_kernel(data)` interface and return tensor.
+- Use Triton kernels as the primary optimization method. You shouldn't use torch.compile. It doesn't do that well.
+- This is iterative evolution: prefer incremental improvements over full rewrites.
+- Apply one main optimization theme per iteration; keep changes attributable.
+- Maintain numerically stable behavior for reduction-sensitive computations.
+- Do not introduce persistent global cache/state.

@@ -1,0 +1,29 @@
+[project]
+name = "numerical-tasks"
+version = "0.1.0"
+description = "SimpleTES shared environment for numerical optimization tasks (lasso_path)"
+requires-python = ">=3.12"
+
+# Shared venv for numerical optimization tasks.
+# Pointed to via --eval-venv from SimpleTES.
+dependencies = [
+    # Evaluator core
+    "numpy>=2.2.6",
+    "scipy>=1.15.3",
+    "psutil>=7.2.2",
+
+    # Reference solvers (correctness validation)
+    "cvxpy>=1.4",
+    "scikit-learn>=1.7.2",
+
+    # Cython compilation support
+    "cython>=3.0.0",
+
+    # Dataset loading
+    "libsvmdata",
+
+    # Available to evolved programs
+    "numba>=0.60",
+    "jax[cpu]",
+    "torch>=2.0",
+]

@@ -1,0 +1,123 @@
+You are an expert in numerical optimization and high-performance computing with C++.
+Your task is to write a fast Gaussian Lasso path solver that beats sklearn's implementation.
+
+## Problem
+
+Solve the full Lasso regularization path:
+
+    minimize  (1/2n) ||y - Xw||^2 + lambda * ||w||_1
+
+for a decreasing sequence of lambda values (lambda_path), returning a coefficient matrix
+coef_path of shape (p, n_lambda) where coef_path[:, k] are the coefficients at lambda_path[k].
+
+X is an (n, p) feature matrix, y is an (n,) target vector, w is the (p,) coefficient vector.
+
+## What You Provide
+
+Only two things inside the EVOLVE-BLOCK:
+
+1. **CPP_CODE**: A raw string containing C++ source code. The evaluator will compile
+   and run this as a subprocess that reads a binary-encoded problem from stdin and
+   writes a binary-encoded coef_path to stdout.
+
+2. **COMPILE_FLAGS** (optional): A Python list of extra compiler flags, e.g.
+   `COMPILE_FLAGS = ["-fopenmp"]` if your code uses OpenMP.
+
+The evaluator handles all compilation, subprocess invocation, and timing.
+You do NOT need to write a lasso_path_solve function.
+
+## Binary Wire Format
+
+Input (written to binary stdin by the evaluator):
+    int32   n           — number of samples
+    int32   p           — number of features
+    int32   n_lambda    — number of lambda values
+    float64[n*p]        X  (row-major)
+    float64[n]          y
+    float64[n_lambda]   lambda_path  (decreasing)
+
+Output (written to stdout by your binary):
+    float64[p * n_lambda]  coef_path  (column-major: column k = coefficients at lambda[k])
+
+## Evaluation
+
+**Timing**: Each problem size is run N_TIMING_RUNS=5 times, each with a different random
+seed (different X, y, lambda_path). The minimum time is reported. Since each call receives
+fresh data, caching results across calls will produce wrong answers and fail correctness.
+
+**Correctness**: Checked on a separate fresh problem not used for timing. For every lambda:
+
+    obj(coef_yours[:, k]) <= obj(coef_sklearn[:, k]) + 1e-6
+
+where obj(w) = (1/2n)||y - Xw||^2 + lambda * ||w||_1. All problems must pass or the
+overall score is 0.
+
+**Score**: 1 / geo_mean(solve_time_ms). Higher is better.
+
+**Note**: The test cases are small sizes for fast iteration. Your program must generalize
+to all problem sizes, including very large, high-dimensional, and datasets with different
+levels of sparsity.
+
+## Baseline Algorithm: glmnet (Already Implemented)
+
+The current init solver is a faithful C++ port of glmnet's Gaussian lasso path,
+implementing both of glmnet's methods with the same switching rule (p < 500 uses
+the covariance method, p >= 500 uses the naive method). Both methods include warm
+starts, sequential strong rules for screening, active-set inner loop, and KKT
+checks on all p features.
+
+The standard glmnet optimizations are already in the baseline. Reimplementing
+them will not improve the score. To beat the baseline, you need a fundamentally
+different algorithmic approach — not just engineering tweaks to the same coordinate
+descent structure. Think about what makes lasso path solving slow and whether
+there are smarter ways to solve the same mathematical problem.
+
+**HARD CONSTRAINT — Precision**: Your solver MUST use float64 (double) throughout
+all internal computation, exactly matching the baseline. This is non-negotiable:
+- All coefficient vectors, residuals, gradients, and intermediate values must be double.
+- Switching to float32 internally is forbidden, even partially or temporarily.
+- Programs that use float32 internally will be disqualified regardless of correctness score.
+The goal is a faster algorithm at the same precision, not a less precise one.
+
+## Available in C++
+
+- Eigen 3.x headers (just use `#include <Eigen/Dense>`)
+- Full C++17 standard library
+- Compiler flags: `-O3 -march=native` (AVX2/AVX-512 SIMD available)
+- OpenMP: set `COMPILE_FLAGS = ["-fopenmp"]` if using `#pragma omp parallel`
+
+## Rules
+
+- Only modify code between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`
+- `CPP_CODE` must be a raw string assigned to a variable called `CPP_CODE`
+- `COMPILE_FLAGS` is optional; if present it must be a list of strings
+- Do NOT define a `lasso_path_solve` function — the evaluator handles this
+- No filesystem or network IO in CPP_CODE outside of the stdin/stdout wire format
+
+## Output Structure
+
+```python
+# EVOLVE-BLOCK-START
+
+CPP_CODE = r'''
+// Your C++ lasso path solver
+#include <Eigen/Dense>
+// ...
+int main() {
+    // Read binary input from stdin
+    // Solve the lasso path
+    // Write binary output to stdout
+}
+'''
+
+# Optional: extra compiler flags
+# COMPILE_FLAGS = ["-fopenmp"]
+
+# EVOLVE-BLOCK-END
+```
+
+## Time budget
+
+600 seconds per evaluation (including compilation). Compilation is cached across calls
+within the same evaluation run via content-hash, so recompilation only happens when
+CPP_CODE changes.

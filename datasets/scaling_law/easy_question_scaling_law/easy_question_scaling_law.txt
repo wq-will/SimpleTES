@@ -1,0 +1,36 @@
+Discover a scaling law function that models the relationship between compute (FLOPs) and LLM performance on easy questions, which exhibits a characteristic U-shaped or double descent pattern.
+
+**IMPORTANT: The scaling law function must use no more than 6 parameters to capture the U-shaped scaling pattern.**
+
+Focus on mathematical accuracy across different benchmark tasks, cross-task generalization, parameter efficiency (simple forms that can be fitted with limited data), and numerical/theoretical stability. The U-shaped pattern is critical: performance initially worsens with scale before improving again.
+
+**DATA CHARACTERISTICS:**
+- Features: [log_flops] - 1D input in log10 scale
+- Labels: brier_score - scalar output (negative values, more negative = better)
+- Dataset size: 389 for train
+- Log FLOPs range: [-0.9, 2.9] approximately (log10 of FLOPs in 1E21 units)
+
+The function signatures must remain:
+
+```python
+def scaling_law_func(data_points, params):
+    # data_points: (N,1) array with columns [log_flops]
+    # log_flops: Array of log10(FLOPs in 1E21 units)
+    # params: Array of up to 6 parameters to capture U-shaped pattern
+    # Returns: Predicted brier_score values (negative)
+
+def fit_scaling_law(data_points, loss_values):
+    # data_points: (N,1) array with columns [log_flops]
+    # log_flops: Array of log10(FLOPs in 1E21 units)
+    # loss_values: Array of corresponding brier_score values
+    # Returns: Optimized parameters (up to 6 parameters)
+```
+
+Write all improvements between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END markers.
+
+You are not allowed to use input-dependent features in scaling_law_func, e.g., median / min / max / etc.
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+
+The time limit for each program evaluation is 600 seconds.
+

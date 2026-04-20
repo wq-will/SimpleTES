@@ -1,0 +1,13 @@
+{
+  "prepare_commands": [
+    {
+      "command": ["bash", "setup.sh"],
+      "cwd": ".",
+      "description": "Create .venv and install bioinformatics dependencies for scRNA-seq denoising"
+    }
+  ],
+  "required_files": [
+    "denoising/denoising_datasets/pancreas/pancreas_train_seed42.npy",
+    "denoising/denoising_datasets/pancreas/pancreas_test_seed42.npy"
+  ]
+}

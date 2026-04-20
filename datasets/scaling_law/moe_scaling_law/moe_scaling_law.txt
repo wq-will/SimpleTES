@@ -1,0 +1,41 @@
+Discover a scaling law function that models the relationship between MoE (Mixture of Experts) architecture parameters and validation loss.
+
+**IMPORTANT: The scaling law function must use no more than 6 parameters.**
+
+Focus on mathematical accuracy across different MoE configurations, generalization across expert counts and model sizes, parameter efficiency (simple forms that can be fitted with limited data), and numerical/theoretical stability.
+
+**DATA CHARACTERISTICS**
+- Features: [num_experts, dense_parameter_count] - 2D input
+- Labels: loss_validation - scalar output
+- Dataset size: 193 
+- Number of experts: 1 to 64 experts (various configurations)
+- Dense parameter count: 1e8 to 8e8 parameters (100M to 800M parameters)
+- Validation loss range: 1.8 to 3.8 cross-entropy loss
+- All data collected at training step 249000 for consistent comparison
+- Includes both dense and MoE transformer architectures
+- Explores trade-off between expert count and parameter efficiency
+
+The function signatures must remain:
+
+```python
+def scaling_law_func(data_points, params):
+    # data_points: (N,2) array with columns [num_experts, dense_parameter_count]
+    # num_experts: Array of expert counts
+    # dense_parameter_count: Array of dense parameter counts
+    # params: Array of up to 6 parameters
+    # Returns: Predicted validation loss values
+
+def fit_scaling_law(data_points, loss_values):
+    # data_points: (N,2) array with columns [num_experts, dense_parameter_count]
+    # loss_values: Array of corresponding validation loss values
+    # Returns: Optimized parameters (up to 6 parameters)
+```
+
+Write all improvements between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END markers.
+
+You are not allowed to use input-dependent features in scaling_law_func, e.g., median / min / max / etc.
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+
+The time limit for each program evaluation is 600 seconds.
+

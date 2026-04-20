@@ -1,0 +1,13 @@
+[project]
+name = "simpletes-eval-circle-packing"
+version = "0.0.0"
+description = "Locked evaluation environment for SimpleTES: circle_packing"
+requires-python = "==3.12.*"
+dependencies = [
+  "numpy",
+  "scipy",
+  "scikit-learn",
+  "cvxpy",
+  "psutil",
+]
+

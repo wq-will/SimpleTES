@@ -1,0 +1,7 @@
+Discretize ([-1/4,1/4]) into equal bins and search for a non-negative step function (f) that minimizes $\frac{2n\max(f*f)}{(\sum f)^2}$,
+
+where (f*f) denotes the unnormalized discrete autoconvolution.
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+
+The time limit for each program evaluation is 1100 seconds.

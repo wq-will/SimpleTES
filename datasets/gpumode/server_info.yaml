@@ -1,0 +1,7 @@
+servers:
+  - ip: localhost
+    port: 8000
+
+# options: random
+load_balance: random
+request_timeout: 3000

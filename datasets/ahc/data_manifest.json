@@ -1,0 +1,13 @@
+{
+  "prepare_commands": [
+    {
+      "command": ["bash", "get_cache.sh"],
+      "cwd": ".",
+      "description": "Download AtCoder test inputs and tester binaries from Google Drive"
+    }
+  ],
+  "required_files": [
+    "cache/public_inputs_150",
+    "cache/tester_binaries"
+  ]
+}

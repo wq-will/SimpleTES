@@ -1,0 +1,46 @@
+[workspace]
+members = ["router_core", "router_cli"]
+resolver = "2"
+
+[workspace.package]
+edition = "2021"
+version = "0.1.0"
+rust-version = "1.85"
+license = "Apache-2.0"
+
+[workspace.dependencies]
+bytemuck = "1.25"
+bitfield-struct = "0.12.1"
+indexmap.version = "2.10.0"
+hashbrown.version = "0.15.5"
+num-bigint = "0.4"
+num-complex = "0.4"
+nalgebra = "0.33"
+numpy = "0.28"
+ndarray = "0.16"
+smallvec = "1.15"
+thiserror = "2.0"
+rustworkx-core = "0.17"
+fixedbitset = "0.5.7"
+approx = "0.5"
+itertools = "0.14.0"
+ahash = "0.8.12"
+rand = "0.9.2"
+rand_pcg = "0.9.0"
+rayon = "1.10"
+nom = "8.0"
+nom-unicode = "0.4"
+nom-language = "0.1"
+num-traits = "0.2"
+uuid = { version = "1.21", features = ["v4", "fast-rng"], default-features = false }
+pyo3 = { version = "0.28.1", features = ["auto-initialize"] }
+qiskit-circuit = { path = "vendor/qiskit/crates/circuit" }
+qiskit-qasm3 = { path = "vendor/qiskit/crates/qasm3" }
+
+[workspace.lints.clippy]
+comparison-chain = "allow"
+print_stdout = "deny"
+print_stderr = "deny"
+
+[workspace.lints.rust]
+unsafe_op_in_unsafe_fn = "deny"

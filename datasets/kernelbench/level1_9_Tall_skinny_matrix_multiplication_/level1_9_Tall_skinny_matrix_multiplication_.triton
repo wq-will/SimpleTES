@@ -1,0 +1,157 @@
+You are an expert Triton engineer tasked with translating PyTorch code into highly optimized Triton kernel code.
+---
+1. Problem Definition
+1.1 Task Description
+You will be implementing a skinny matrix multiplication kernel, a computation pattern commonly found in modern machine learning and scientific computing workloads. In this task, the matrices are highly asymmetric in shape: one or both spatial dimensions are large, while the reduction dimension is relatively small.
+
+Your task is to implement this operation using Triton kernel code and optimize it for end-to-end latency on GPU. The implementation should preserve the same public PyTorch model interface.
+
+- You may use any precision format and fully leverage the GPU hardware units for optimization, as long as output error stays below the required tolerance. (absolute tolerance: 0.01, relative tolerance: 0.01)
+
+1.2 Task Reference Implementation
+Here is a pytorch implementation. You will want to implement a kernel for the operations in the forward call:
+
+# EVOLVE-BLOCK-START
+from utils import make_match_reference
+from typing import Tuple, Dict
+
+import torch
+from torch import nn
+
+def custom_kernel(data: Tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
+    A, B = data
+    # Your optimized implementation
+
+class Model(nn.Module):
+    def __init__(self):
+        super(Model, self).__init__()
+    
+    def forward(self, A, B):
+        return torch.matmul(A, B)
+
+def ref_kernel(data: Tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
+    A, B = data
+    model = Model().to(A.device)
+    return model(A, B)
+
+1.3 Input/Output Specification
+Tensor
+| Tensor | Shape | Dtype | Layout |
+|--------|-------|-------|--------|
+| input  | task-specific | float32 | contiguous, row-major |
+| output | task-specific | float32 | contiguous |
+
+
+---
+
+2. Hardware Specification
+2.1 GPU Model
+NVIDIA H200 141GB
+
+2.2 Key Hardware Parameters
+| Parameter              | Value    |
+|------------------------|----------|
+| SM Count               | 132      |
+| Max Threads per Block  | 1024     |
+| Registers per SM Count |   65536 |
+| Shared Memory per SM   | 228 KB   |
+| L2 Cache Size          | 50 MB    |
+| Memory Bandwidth       | 4.8 TB/s |
+| FP32 Peak             | 67 TFLOPS    |
+| TF32 Tensor Core Peak | 989 TFLOPS   |
+| FP16 Tensor Core Peak | 1,979 TFLOPS |
+| BF16 Tensor Core Peak | 1,979 TFLOPS |
+| FP8 Tensor Core Peak  | 3,958 TFLOPS |
+
+---
+
+3. Implementation Guidelines
+3.1 Triton version
+Use Triton 3.4.0 style APIs and write kernels that are easy to autotune. Example Triton 3.4.0 autotune pattern (persistent matmul):
+
+```python
+@triton.jit
+def add_kernel(x_ptr,  # *Pointer* to first input vector.
+               y_ptr,  # *Pointer* to second input vector.
+               output_ptr,  # *Pointer* to output vector.
+               n_elements,  # Size of the vector.
+               BLOCK_SIZE: tl.constexpr,  # Number of elements each program should process.
+               # NOTE: `constexpr` so it can be used as a shape value.
+               ):
+    # There are multiple 'programs' processing different data. We identify which program
+    # we are here:
+    pid = tl.program_id(axis=0)  # We use a 1D launch grid so axis is 0.
+    # This program will process inputs that are offset from the initial data.
+    # For instance, if you had a vector of length 256 and block_size of 64, the programs
+    # would each access the elements [0:64, 64:128, 128:192, 192:256].
+    # Note that offsets is a list of pointers:
+    block_start = pid * BLOCK_SIZE
+    offsets = block_start + tl.arange(0, BLOCK_SIZE)
+    # Create a mask to guard memory operations against out-of-bounds accesses.
+    mask = offsets < n_elements
+    # Load x and y from DRAM, masking out any extra elements in case the input is not a
+    # multiple of the block size.
+    x = tl.load(x_ptr + offsets, mask=mask)
+    y = tl.load(y_ptr + offsets, mask=mask)
+    output = x + y
+    # Write x + y back to DRAM.
+    tl.store(output_ptr + offsets, output, mask=mask)
+```
+
+3.2 General Optimization Tips
+You are operating in an iterative evolution loop, not a one-shot rewrite setting. The objective is to produce reliable descendants that improve end-to-end geomean, while preserving correctness and stability.
+In this setting, each candidate should be treated as a careful refinement of the strong known implementation, not a fresh redesign. The goal is to improve end-to-end geomean, so each iteration should focus on a single optimization theme (for example, launch tuning, local fusion, layout cleanup, or reducing one materialization point). This keeps the search signal clean and makes it easier to identify which change actually improved performance.
+
+The optimization priority should be practical: first improve dataflow efficiency by removing unnecessary memory movement (extra reads/writes, transient tensors, avoidable layout conversions), then optimize compute-heavy regions with context awareness. In particular, dominant contraction-like stages should be treated differently from surrounding elementwise and reduction code, and producer/consumer efficiency should usually be improved before replacing mature backend primitives.
+
+To control regressions, apply changes with a risk ladder—low-risk tuning first, medium-risk structural edits next, and high-risk rewrites only when progress stalls. Throughout the process, preserve exact semantics across all required input regimes and maintain numerically stable behavior in reduction-sensitive paths.
+
+
+3.3 A few general triton tips:
+- tl.arange only takes in constexpr arguments (static or tl.constexpr)
+- You cannot use continue in your kernel code
+- tl.dot can only take in two input tensors
+- There is no tl.mean
+
+---
+
+4. Testing Requirements
+The following configurations provide example problem setups used in performance testing:
+
+- {"name":"a","M":32768,"N":32,"seed":17717}
+
+The score is the reciprocal of the geometric mean across several settings, and a higher score indicates better performance.
+
+---
+
+5. Output Format
+
+Your response must consist of one and only one complete, self-contained Python file. Start with `#EVOLVE-BLOCK-START` and end with `#EVOLVE-BLOCK-END`.
+
+You can write custom_kernel and optimized kernel as follows:
+
+# EVOLVE-BLOCK-START
+import torch
+from torch import nn
+import triton
+import triton.language as tl
+from utils import make_match_reference, DisableCuDNNTF32
+from typing import TypedDict, TypeVar, Tuple, Dict
+
+# Your Triton kernel code here
+
+def custom_kernel(data: Tuple[torch.Tensor, torch.Tensor]) -> torch.Tensor:
+    # Your optimized implementation
+
+# EVOLVE-BLOCK-END
+
+---
+
+Important:
+- Return one and only one complete Python file between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- Preserve `custom_kernel(data)` interface and return tensor.
+- Use Triton kernels as the primary optimization method. You shouldn't use torch.compile. It doesn't do that well.
+- This is iterative evolution: prefer incremental improvements over full rewrites.
+- Apply one main optimization theme per iteration; keep changes attributable.
+- Maintain numerically stable behavior for reduction-sensitive computations.
+- Do not introduce persistent global cache/state.

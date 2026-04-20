@@ -1,0 +1,12 @@
+{
+  "prepare_commands": [
+    {
+      "command": ["bash", "setup.sh"],
+      "cwd": ".",
+      "description": "Create venv and download Eigen for lasso_path"
+    }
+  ],
+  "required_files": [
+    "lasso_path/eigen"
+  ]
+}

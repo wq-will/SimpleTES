@@ -1,0 +1,580 @@
+{
+  "cases": [
+    {
+      "id": "4gt13_92_q20",
+      "qasm3_path": "circuits/SABRE/4gt13_92.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 0,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "4gt13_92_willow",
+      "qasm3_path": "circuits/SABRE/4gt13_92.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 45,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "4gt13_92_heron_fez",
+      "qasm3_path": "circuits/SABRE/4gt13_92.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 45,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "4mod5-v1_22_q20",
+      "qasm3_path": "circuits/SABRE/4mod5-v1_22.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 0,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "4mod5-v1_22_willow",
+      "qasm3_path": "circuits/SABRE/4mod5-v1_22.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 15,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "4mod5-v1_22_heron_fez",
+      "qasm3_path": "circuits/SABRE/4mod5-v1_22.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 12,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "9symml_195_q20",
+      "qasm3_path": "circuits/SABRE/9symml_195.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 17268,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "9symml_195_willow",
+      "qasm3_path": "circuits/SABRE/9symml_195.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 26721,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "9symml_195_heron_fez",
+      "qasm3_path": "circuits/SABRE/9symml_195.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 35286,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "adr4_197_q20",
+      "qasm3_path": "circuits/SABRE/adr4_197.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 1614,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "adr4_197_willow",
+      "qasm3_path": "circuits/SABRE/adr4_197.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 2703,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "adr4_197_heron_fez",
+      "qasm3_path": "circuits/SABRE/adr4_197.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 3717,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "alu-v0_27_q20",
+      "qasm3_path": "circuits/SABRE/alu-v0_27.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 3,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "alu-v0_27_willow",
+      "qasm3_path": "circuits/SABRE/alu-v0_27.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 21,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "alu-v0_27_heron_fez",
+      "qasm3_path": "circuits/SABRE/alu-v0_27.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 36,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "co14_215_q20",
+      "qasm3_path": "circuits/SABRE/co14_215.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 8982,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "co14_215_willow",
+      "qasm3_path": "circuits/SABRE/co14_215.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 14139,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "co14_215_heron_fez",
+      "qasm3_path": "circuits/SABRE/co14_215.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 17913,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "cycle10_2_110_q20",
+      "qasm3_path": "circuits/SABRE/cycle10_2_110.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 2622,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "cycle10_2_110_willow",
+      "qasm3_path": "circuits/SABRE/cycle10_2_110.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 4692,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "cycle10_2_110_heron_fez",
+      "qasm3_path": "circuits/SABRE/cycle10_2_110.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 5340,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "decod24-v2_43_q20",
+      "qasm3_path": "circuits/SABRE/decod24-v2_43.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 0,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "decod24-v2_43_willow",
+      "qasm3_path": "circuits/SABRE/decod24-v2_43.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 36,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "decod24-v2_43_heron_fez",
+      "qasm3_path": "circuits/SABRE/decod24-v2_43.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 36,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "ising_model_10_q20",
+      "qasm3_path": "circuits/SABRE/ising_model_10.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 0,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "ising_model_10_willow",
+      "qasm3_path": "circuits/SABRE/ising_model_10.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 0,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "ising_model_10_heron_fez",
+      "qasm3_path": "circuits/SABRE/ising_model_10.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 0,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "ising_model_13_q20",
+      "qasm3_path": "circuits/SABRE/ising_model_13.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 0,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "ising_model_13_willow",
+      "qasm3_path": "circuits/SABRE/ising_model_13.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 27,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "ising_model_13_heron_fez",
+      "qasm3_path": "circuits/SABRE/ising_model_13.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 27,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "ising_model_16_q20",
+      "qasm3_path": "circuits/SABRE/ising_model_16.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 0,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "ising_model_16_willow",
+      "qasm3_path": "circuits/SABRE/ising_model_16.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 15,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "ising_model_16_heron_fez",
+      "qasm3_path": "circuits/SABRE/ising_model_16.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 0,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "misex1_241_q20",
+      "qasm3_path": "circuits/SABRE/misex1_241.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 1521,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "misex1_241_willow",
+      "qasm3_path": "circuits/SABRE/misex1_241.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 3819,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "misex1_241_heron_fez",
+      "qasm3_path": "circuits/SABRE/misex1_241.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 4545,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "mod5mils_65_q20",
+      "qasm3_path": "circuits/SABRE/mod5mils_65.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 0,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "mod5mils_65_willow",
+      "qasm3_path": "circuits/SABRE/mod5mils_65.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 21,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "mod5mils_65_heron_fez",
+      "qasm3_path": "circuits/SABRE/mod5mils_65.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 27,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "qft_10_q20",
+      "qasm3_path": "circuits/SABRE/qft_10.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 54,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "qft_10_willow",
+      "qasm3_path": "circuits/SABRE/qft_10.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 93,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "qft_10_heron_fez",
+      "qasm3_path": "circuits/SABRE/qft_10.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 138,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "qft_16_q20",
+      "qasm3_path": "circuits/SABRE/qft_16.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 186,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "qft_16_willow",
+      "qasm3_path": "circuits/SABRE/qft_16.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 261,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "qft_16_heron_fez",
+      "qasm3_path": "circuits/SABRE/qft_16.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 555,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "radd_250_q20",
+      "qasm3_path": "circuits/SABRE/radd_250.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 1275,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "radd_250_willow",
+      "qasm3_path": "circuits/SABRE/radd_250.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 2553,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "radd_250_heron_fez",
+      "qasm3_path": "circuits/SABRE/radd_250.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 3207,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "rd73_252_q20",
+      "qasm3_path": "circuits/SABRE/rd73_252.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 2133,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "rd73_252_willow",
+      "qasm3_path": "circuits/SABRE/rd73_252.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 3981,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "rd73_252_heron_fez",
+      "qasm3_path": "circuits/SABRE/rd73_252.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 5355,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "rd84_142_q20",
+      "qasm3_path": "circuits/SABRE/rd84_142.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 105,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "rd84_142_willow",
+      "qasm3_path": "circuits/SABRE/rd84_142.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 279,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "rd84_142_heron_fez",
+      "qasm3_path": "circuits/SABRE/rd84_142.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 309,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "rd84_253_q20",
+      "qasm3_path": "circuits/SABRE/rd84_253.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 6147,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "rd84_253_willow",
+      "qasm3_path": "circuits/SABRE/rd84_253.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 10551,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "rd84_253_heron_fez",
+      "qasm3_path": "circuits/SABRE/rd84_253.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 14199,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "sqn_258_q20",
+      "qasm3_path": "circuits/SABRE/sqn_258.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 4344,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "sqn_258_willow",
+      "qasm3_path": "circuits/SABRE/sqn_258.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 7536,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "sqn_258_heron_fez",
+      "qasm3_path": "circuits/SABRE/sqn_258.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 10374,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "square_root_7_q20",
+      "qasm3_path": "circuits/SABRE/square_root_7.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 2598,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "square_root_7_willow",
+      "qasm3_path": "circuits/SABRE/square_root_7.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 5646,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "square_root_7_heron_fez",
+      "qasm3_path": "circuits/SABRE/square_root_7.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 7896,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "sym6_145_q20",
+      "qasm3_path": "circuits/SABRE/sym6_145.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 1272,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "sym6_145_willow",
+      "qasm3_path": "circuits/SABRE/sym6_145.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 2814,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "sym6_145_heron_fez",
+      "qasm3_path": "circuits/SABRE/sym6_145.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 3171,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "sym9_193_q20",
+      "qasm3_path": "circuits/SABRE/sym9_193.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 16653,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "sym9_193_willow",
+      "qasm3_path": "circuits/SABRE/sym9_193.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 26721,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "sym9_193_heron_fez",
+      "qasm3_path": "circuits/SABRE/sym9_193.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 35286,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "z4_268_q20",
+      "qasm3_path": "circuits/SABRE/z4_268.qasm",
+      "topology_path": "topologies/q20.json",
+      "original_cnot_added": 1365,
+      "weight": 0.2,
+      "seed": 42
+    },
+    {
+      "id": "z4_268_willow",
+      "qasm3_path": "circuits/SABRE/z4_268.qasm",
+      "topology_path": "topologies/willow.json",
+      "original_cnot_added": 2367,
+      "weight": 0.4,
+      "seed": 42
+    },
+    {
+      "id": "z4_268_heron_fez",
+      "qasm3_path": "circuits/SABRE/z4_268.qasm",
+      "topology_path": "topologies/heron_fez.json",
+      "original_cnot_added": 3084,
+      "weight": 0.4,
+      "seed": 42
+    }
+  ]
+}

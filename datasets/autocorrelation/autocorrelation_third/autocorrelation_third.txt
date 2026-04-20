@@ -1,0 +1,6 @@
+Design a Python program that constructs a discrete function `f: R -> R` on the domain `[-1/4, 1/4]` to minimize
+`C3 = 2·n·max(|conv(f,f)|) / (∑f)²`, aiming to beat the SOTA of `1.4556427953745406`.
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+
+The time limit for each program evaluation is 70 seconds.

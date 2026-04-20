@@ -1,0 +1,17 @@
+[package]
+name = "router_core"
+version = "0.1.0"
+edition = "2021"
+license = "Apache-2.0"
+
+[dependencies]
+qiskit-circuit.workspace = true
+qiskit-qasm3.workspace = true
+pyo3.workspace = true
+ahash.workspace = true
+hashbrown.workspace = true
+indexmap.workspace = true
+rustworkx-core.workspace = true
+rand.workspace = true
+rand_pcg.workspace = true
+ndarray.workspace = true

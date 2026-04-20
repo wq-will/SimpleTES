@@ -1,0 +1,740 @@
+# TASK: Improve a Rust Qubit-Routing Policy for QASM3 Circuits
+
+You are optimizing a **qubit routing policy** in Rust. The initial policy is an implementation of Qiskit LightSABRE. A fixed routing engine handles circuit parsing, state tracking, control flow, disjoint topology, and output construction. Your job is to improve the **decision-making policy**: (1) predict an initial mapping from logical qubit to physical qubit (2) select SWAP at every routing decision while keeping everything correct and fast.
+
+---
+
+## 0) What you are allowed to edit
+
+You will edit **ONLY** inside the marked region:
+
+* `// EVOLVE-BLOCK-START`
+* `// EVOLVE-BLOCK-END`
+
+The evaluator will:
+
+1. compile the Rust project with your mutated code,
+2. run routing on a benchmark suite of circuits and device graphs,
+3. score your results.
+
+Write a short summary of your reasoning as Rust comments right after `// EVOLVE-BLOCK-START`.
+
+---
+
+
+## 1) Formal problem statement
+
+### Inputs
+
+You are given:
+
+1. A **quantum circuit** (C) over logical qubits ($L={0,\dots,n-1}$).
+
+2. A **hardware topology** ($G=(P,E)$), with physical qubits ($P={0,\dots,m-1}$) and undirected edges ($E\subseteq \{(p,q)\mid p,q\in P\}$), where a 2-qubit gate can be executed natively only on an edge.
+
+### Output
+
+You must produce a routed physical circuit (C') that is valid under (G). Formally, routing consists of:
+
+* an initial injective mapping ($\pi_0: L \to P$),
+* a sequence of SWAP layers (${S_t \subseteq E}_{t=0}^{T-1}$) that update the mapping over time,
+* a gate schedule that respects the circuit dependencies and ensures that each 2-qubit gate ($(\ell_i,\ell_j)$) is executed only when (${\pi_t(\ell_i),\pi_t(\ell_j)}\in E$).
+
+## Goal
+
+The evaluator computes a score over a benchmark suite of different quantum circuits and hardware topologies. Your optimization objective:
+
+* **Maximize `combined_score`**.
+
+For each benchmark case `i`, let:
+
+* `w_i` = the case weight from suite metadata,
+* `orig_i` = inserted CNOT count (1 SWAP = 3 CNOTs) by the baseline routing strategy
+* `add_i` = inserted CNOT count by your proposed strategy.
+    * if routing succeeds: `add_i = 3 * the routed circuit's inserted SWAP count`
+    * if routing fails / is invalid: `add_i = orig_i` (that case gets no credit)
+
+The evaluator uses:
+* total score: `combined_score = sum_i w_i * (orig_i - add_i)`
+
+So higher is better. In practice, this means:
+
+* reducing inserted SWAPs is the main driver of score,
+* failures are very expensive because they zero out that case's improvement,
+
+The evaluator also reports `depth`, runtime, validity, and other aggregate metrics. Those are useful signals when reasoning about tradeoffs, but `combined_score` is the actual optimization target.
+
+If your policy fails to compile, panics, times out, or produces invalid routing on any benchmark instance, it receives a large penalty / fails.
+
+---
+
+## 2) Topology context for the current benchmark suite
+
+The current SABRE suite evaluates each circuit on three device graphs: `q20`, `willow`, or `heron_fez`. You may exploit generic graph structure, but your policy **must not** hardcode logic these three topologies specifically. Later evaluation will include broader unseen topologies.
+
+### q20
+
+Qualitative picture:
+
+* a small sparse 20-qubit lattice,
+* roughly a 4x5 grid / ladder structure,
+* with row links, column links, and a few diagonal cross-braces,
+* short paths and moderate local connectivity.
+
+### willow
+
+Qualitative picture:
+
+* a large planar, locally connected, grid-like / brickwork topology,
+* many local alternatives for routing,
+* wider interior regions than q20,
+* congestion and path diversity can matter much more than on small graphs.
+
+### heron_fez
+
+Qualitative picture:
+
+* a large sparse heavy-hex-like topology,
+* many long horizontal chains with periodic vertical connectors,
+* typically lower local branching and fewer alternate short paths than willow,
+* routing may benefit from respecting narrow corridors and avoiding local congestion traps.
+
+### Topology-aware strategy guidance
+
+You are encouraged to infer structural properties of the current coupling graph and use them in your policy. Useful generic signals may include:
+
+* degree / branching structure,
+* path diversity and local bottlenecks,
+* graph distance distribution,
+* whether the graph behaves more like a narrow corridor, a lattice, or a broader mesh,
+* edge centrality / bridge-like connectors,
+* how much the active/front-layer qubits are clustered or spread out.
+
+The exact runtime graph is available through `TopologyView` methods such as
+`edges()`, `neighbors()`, `distance()`, `distances()`, and
+`connected_components()`. Use the actual runtime graph instance rather than
+hardcoding benchmark-specific edge lists.
+
+Notice:
+
+* your policy should work for **arbitrary** topologies supplied by the evaluator,
+* do **not** hardcode special cases by topology name, file name, or exact qubit count,
+* do **not** assume future evaluation only uses the three graphs above,
+* if you adapt behavior to topology, compute graph features from the actual graph instance at runtime.
+
+---
+
+## 3) Hard constraints (must not violate)
+
+### A. Compile + interface stability
+
+* Your code must compile as Rust (stable toolchain).
+* Do **not** change any function signatures or trait implementations that the engine expects.
+* Do **not** add heavy dependencies. (Prefer: no new crates.)
+* The evaluator may run multiple seeds/trials. If you use randomness, it must be derived from the provided seed/RNG and remain reproducible.
+* Total compilation + evaluation should be within a reasonable time budget (target: ≤ 20 minutes on the full benchmark).
+
+### B. Correctness invariants
+
+Your policy must not break routing correctness:
+
+* Never predict an illegal initial mapping (missing qubits, etc.), or select an illegal SWAP (must be an edge in the coupling graph).
+* Do not assume special initial states.
+* The 2-qubit gates must be executed in the original order. An equivalent circuit with a different order would be considered by the evaluator as invalid.
+
+### C. Fixed interface reference
+
+Below is the fixed scaffold. It already defines the surrounding types and trait, and does necessary import. Your evolve
+block should use them exactly as named below.
+- Output only the code that should appear between EVOLVE-BLOCK-START and EVOLVE-BLOCK-END.
+- Do not output a full file.
+- The evaluator replaces the entire previous evolve block with your returned evolve block. This is not a diff or patch.
+- If you keep only a modified fragment such as one `impl` or one helper, every omitted item from the previous evolve block is deleted and the program will usually fail to compile.
+- Do not repeat any import, trait, struct, enum, impl, or function that is already defined in the scaffold below, which is outside the evolve block and will be used directly in compilation.
+- Any helper you call must either be defined in the scaffold or be defined by you inside the evolve block.
+
+
+#### Policy hooks
+
+```rust
+pub trait Policy: Clone {
+    fn choose_best_initial_layout(
+        &mut self,
+        ctx: &InitialLayoutContext<'_>,
+        rng: &mut RngState,
+    ) -> Result<Vec<usize>, RouterError>;
+
+    fn choose_best_swap(
+        &mut self,
+        ctx: &SwapSelectionContext<'_>,
+        rng: &mut RngState,
+    ) -> Option<(usize, usize)>;
+}
+```
+
+#### Scaffold
+```rust
+use std::collections::{HashMap, HashSet, VecDeque};
+use std::ops::Range;
+
+use ndarray::Array2;
+use rand::Rng;
+use rand::SeedableRng;
+use rand_pcg::Pcg64Mcg;
+use rustworkx_core::petgraph::graph::NodeIndex;
+
+use crate::engine::dense_layout;
+use crate::engine::routing_target::RoutingTarget;
+use crate::engine::sabre::layout::Layout;
+use crate::engine::RouterError;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum DagNodeKind {
+    Directive,
+    SingleQ,
+    TwoQ,
+    MultiQ,
+    ControlFlow,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum RemainingNodeState {
+    Pending,
+    Ready,
+    Executed,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct PolicyDagNodeData {
+    pub(crate) dag_index: NodeIndex,
+    pub(crate) dag_indices: Vec<NodeIndex>,
+    pub(crate) kind: DagNodeKind,
+    pub(crate) name: String,
+    pub(crate) qargs: Vec<usize>,
+    pub(crate) cargs: Vec<usize>,
+    pub(crate) successors: Vec<usize>,
+    pub(crate) predecessors: Vec<usize>,
+    pub(crate) block_count: usize,
+}
+
+#[derive(Debug, Clone)]
+pub(crate) struct PolicyDagData {
+    pub(crate) num_logical_qubits: usize,
+    pub(crate) initial_ops: Vec<NodeIndex>,
+    pub(crate) nodes: Vec<PolicyDagNodeData>,
+    pub(crate) first_layer: Vec<usize>,
+    pub(crate) used_logical_qubits: Vec<usize>,
+    pub(crate) logical_interaction_components: Vec<Vec<usize>>,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct DagNodeView<'a> {
+    node: &'a PolicyDagNodeData,
+}
+
+impl<'a> DagNodeView<'a> {
+    pub(crate) fn new(node: &'a PolicyDagNodeData) -> Self {
+        Self { node }
+    }
+
+    pub fn kind(&self) -> DagNodeKind {
+        self.node.kind
+    }
+
+    pub fn name(&self) -> &str {
+        &self.node.name
+    }
+
+    pub fn qargs(&self) -> &[usize] {
+        &self.node.qargs
+    }
+
+    pub fn cargs(&self) -> &[usize] {
+        &self.node.cargs
+    }
+
+    pub fn successors(&self) -> &[usize] {
+        &self.node.successors
+    }
+
+    pub fn predecessors(&self) -> &[usize] {
+        &self.node.predecessors
+    }
+
+    pub fn block_count(&self) -> usize {
+        self.node.block_count
+    }
+
+    pub fn is_two_qubit(&self) -> bool {
+        self.node.kind == DagNodeKind::TwoQ && self.node.qargs.len() == 2
+    }
+
+    pub fn two_qubit_pair(&self) -> Option<(usize, usize)> {
+        if self.is_two_qubit() {
+            Some((self.node.qargs[0], self.node.qargs[1]))
+        } else {
+            None
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct CircuitDagView<'a> {
+    data: &'a PolicyDagData,
+}
+
+impl<'a> CircuitDagView<'a> {
+    pub(crate) fn new(data: &'a PolicyDagData) -> Self {
+        Self { data }
+    }
+
+    pub fn num_logical_qubits(&self) -> usize {
+        self.data.num_logical_qubits
+    }
+
+    pub fn node_count(&self) -> usize {
+        self.data.nodes.len()
+    }
+
+    pub fn node_ids(&self) -> Range<usize> {
+        0..self.data.nodes.len()
+    }
+
+    pub fn node(&self, node_id: usize) -> DagNodeView<'a> {
+        DagNodeView::new(&self.data.nodes[node_id])
+    }
+
+    pub fn first_layer_node_ids(&self) -> &[usize] {
+        &self.data.first_layer
+    }
+
+    pub fn used_logical_qubits(&self) -> &[usize] {
+        &self.data.used_logical_qubits
+    }
+
+    pub fn logical_interaction_components(&self) -> &[Vec<usize>] {
+        &self.data.logical_interaction_components
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct TopologyView<'a> {
+    target: &'a RoutingTarget,
+}
+
+impl<'a> TopologyView<'a> {
+    pub(crate) fn new(target: &'a RoutingTarget) -> Self {
+        Self { target }
+    }
+
+    pub fn num_qubits(&self) -> usize {
+        self.target.num_qubits
+    }
+
+    pub fn num_edges(&self) -> usize {
+        self.target.edges().len()
+    }
+
+    pub fn edges(&self) -> &[[usize; 2]] {
+        self.target.edges()
+    }
+
+    pub fn neighbors(&self, qubit: usize) -> &[usize] {
+        self.target.neighbors(qubit)
+    }
+
+    pub fn degree(&self, qubit: usize) -> usize {
+        self.target.degree(qubit)
+    }
+
+    pub fn max_degree(&self) -> usize {
+        self.target.max_degree()
+    }
+
+    pub fn distance(&self, a: usize, b: usize) -> u32 {
+        self.target.distance(a, b)
+    }
+
+    pub fn distances(&self) -> &[Vec<u32>] {
+        self.target.distances()
+    }
+
+    pub fn shortest_path(&self, a: usize, b: usize) -> Vec<usize> {
+        self.target.shortest_path(a, b)
+    }
+
+    pub fn connected_components(&self) -> &[Vec<usize>] {
+        self.target.connected_components()
+    }
+
+    pub fn component_of_physical(&self, physical: usize) -> usize {
+        self.target.component_of_physical(physical)
+    }
+
+    pub fn is_adjacent(&self, a: usize, b: usize) -> bool {
+        self.target.is_adjacent(a, b)
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct LayoutView<'a> {
+    layout: &'a Layout,
+}
+
+impl<'a> LayoutView<'a> {
+    pub(crate) fn new(layout: &'a Layout) -> Self {
+        Self { layout }
+    }
+
+    pub fn num_logical(&self) -> usize {
+        self.layout.logical_to_physical_map().len()
+    }
+
+    pub fn num_physical(&self) -> usize {
+        self.layout.num_physical()
+    }
+
+    pub fn physical_of_logical(&self, logical: usize) -> usize {
+        self.layout.physical_of_logical(logical)
+    }
+
+    pub fn logical_of_physical(&self, physical: usize) -> Option<usize> {
+        self.layout.logical_of_physical(physical)
+    }
+
+    pub fn logical_to_physical(&self) -> &[usize] {
+        self.layout.logical_to_physical_map()
+    }
+
+    pub fn physical_to_logical(&self) -> &[Option<usize>] {
+        self.layout.physical_to_logical_map()
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct FrontLayerView<'a> {
+    circuit: CircuitDagView<'a>,
+    layout: LayoutView<'a>,
+    node_ids: &'a [usize],
+    physical_pairs: &'a [[usize; 2]],
+}
+
+impl<'a> FrontLayerView<'a> {
+    pub(crate) fn new(
+        circuit: CircuitDagView<'a>,
+        layout: LayoutView<'a>,
+        node_ids: &'a [usize],
+        physical_pairs: &'a [[usize; 2]],
+    ) -> Self {
+        Self {
+            circuit,
+            layout,
+            node_ids,
+            physical_pairs,
+        }
+    }
+
+    pub fn len(&self) -> usize {
+        self.node_ids.len()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.node_ids.is_empty()
+    }
+
+    pub fn node_ids(&self) -> &[usize] {
+        self.node_ids
+    }
+
+    pub fn logical_pair(&self, node_id: usize) -> Option<(usize, usize)> {
+        self.circuit.node(node_id).two_qubit_pair()
+    }
+
+    pub fn physical_pair(&self, node_id: usize) -> Option<(usize, usize)> {
+        let idx = self.node_ids.iter().position(|&id| id == node_id)?;
+        let pair = self.physical_pairs[idx];
+        Some((pair[0], pair[1]))
+    }
+
+    pub fn active_logical_qubits(&self) -> Vec<usize> {
+        let mut out = Vec::new();
+        let mut seen = HashSet::new();
+        for &node_id in self.node_ids {
+            if let Some((a, b)) = self.logical_pair(node_id) {
+                if seen.insert(a) {
+                    out.push(a);
+                }
+                if seen.insert(b) {
+                    out.push(b);
+                }
+            }
+        }
+        out
+    }
+
+    pub fn active_physical_qubits(&self) -> Vec<usize> {
+        let mut out = Vec::new();
+        for pair in self.physical_pairs {
+            out.push(pair[0]);
+            out.push(pair[1]);
+        }
+        out
+    }
+
+    pub fn physical_pairs(&self) -> &'a [[usize; 2]] {
+        self.physical_pairs
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct RemainingDagView<'a> {
+    circuit: CircuitDagView<'a>,
+    state: &'a [RemainingNodeState],
+    remaining_predecessors: &'a [usize],
+    ready_node_ids: &'a [usize],
+    pending_node_ids: &'a [usize],
+    remaining_two_qubit_node_ids: &'a [usize],
+    front_layer_node_ids: &'a [usize],
+}
+
+impl<'a> RemainingDagView<'a> {
+    pub(crate) fn new(
+        circuit: CircuitDagView<'a>,
+        state: &'a [RemainingNodeState],
+        remaining_predecessors: &'a [usize],
+        ready_node_ids: &'a [usize],
+        pending_node_ids: &'a [usize],
+        remaining_two_qubit_node_ids: &'a [usize],
+        front_layer_node_ids: &'a [usize],
+    ) -> Self {
+        Self {
+            circuit,
+            state,
+            remaining_predecessors,
+            ready_node_ids,
+            pending_node_ids,
+            remaining_two_qubit_node_ids,
+            front_layer_node_ids,
+        }
+    }
+
+    pub fn circuit(&self) -> CircuitDagView<'a> {
+        self.circuit
+    }
+
+    pub fn state(&self, node_id: usize) -> RemainingNodeState {
+        self.state[node_id]
+    }
+
+    pub fn is_executed(&self, node_id: usize) -> bool {
+        self.state(node_id) == RemainingNodeState::Executed
+    }
+
+    pub fn remaining_predecessor_count(&self, node_id: usize) -> usize {
+        self.remaining_predecessors[node_id]
+    }
+
+    pub fn remaining_predecessor_counts(&self) -> &[usize] {
+        self.remaining_predecessors
+    }
+
+    pub fn ready_node_ids(&self) -> &[usize] {
+        self.ready_node_ids
+    }
+
+    pub fn pending_node_ids(&self) -> &[usize] {
+        self.pending_node_ids
+    }
+
+    pub fn unexecuted_node_ids(&self) -> &[usize] {
+        self.pending_node_ids
+    }
+
+    pub fn remaining_two_qubit_node_ids(&self) -> &[usize] {
+        self.remaining_two_qubit_node_ids
+    }
+
+    pub fn front_layer_node_ids(&self) -> &[usize] {
+        self.front_layer_node_ids
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct InitialLayoutContext<'a> {
+    topology: TopologyView<'a>,
+    circuit: CircuitDagView<'a>,
+}
+
+impl<'a> InitialLayoutContext<'a> {
+    pub(crate) fn new(topology: TopologyView<'a>, circuit: CircuitDagView<'a>) -> Self {
+        Self { topology, circuit }
+    }
+
+    pub fn topology(&self) -> TopologyView<'a> {
+        self.topology
+    }
+
+    pub fn circuit(&self) -> CircuitDagView<'a> {
+        self.circuit
+    }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct SwapSelectionContext<'a> {
+    topology: TopologyView<'a>,
+    layout: LayoutView<'a>,
+    circuit: CircuitDagView<'a>,
+    remaining: RemainingDagView<'a>,
+    front_layer: FrontLayerView<'a>,
+    precomputed_extended_set_logical_pairs: Option<&'a [[usize; 2]]>,
+    swaps_since_progress: usize,
+    last_applied_swap: Option<(usize, usize)>,
+}
+
+impl<'a> SwapSelectionContext<'a> {
+    pub(crate) fn new(
+        topology: TopologyView<'a>,
+        layout: LayoutView<'a>,
+        circuit: CircuitDagView<'a>,
+        remaining: RemainingDagView<'a>,
+        front_layer: FrontLayerView<'a>,
+        swaps_since_progress: usize,
+        last_applied_swap: Option<(usize, usize)>,
+    ) -> Self {
+        Self {
+            topology,
+            layout,
+            circuit,
+            remaining,
+            front_layer,
+            precomputed_extended_set_logical_pairs: None,
+            swaps_since_progress,
+            last_applied_swap,
+        }
+    }
+
+    pub(crate) fn new_with_precomputed_extended_set(
+        topology: TopologyView<'a>,
+        layout: LayoutView<'a>,
+        circuit: CircuitDagView<'a>,
+        remaining: RemainingDagView<'a>,
+        front_layer: FrontLayerView<'a>,
+        precomputed_extended_set_logical_pairs: &'a [[usize; 2]],
+        swaps_since_progress: usize,
+        last_applied_swap: Option<(usize, usize)>,
+    ) -> Self {
+        Self {
+            topology,
+            layout,
+            circuit,
+            remaining,
+            front_layer,
+            precomputed_extended_set_logical_pairs: Some(precomputed_extended_set_logical_pairs),
+            swaps_since_progress,
+            last_applied_swap,
+        }
+    }
+
+    pub fn topology(&self) -> TopologyView<'a> {
+        self.topology
+    }
+
+    pub fn layout(&self) -> LayoutView<'a> {
+        self.layout
+    }
+
+    pub fn circuit(&self) -> CircuitDagView<'a> {
+        self.circuit
+    }
+
+    pub fn remaining(&self) -> RemainingDagView<'a> {
+        self.remaining
+    }
+
+    pub fn front_layer(&self) -> FrontLayerView<'a> {
+        self.front_layer
+    }
+
+    pub fn precomputed_extended_set_logical_pairs(&self) -> &'a [[usize; 2]] {
+        self.precomputed_extended_set_logical_pairs.unwrap_or(&[])
+    }
+
+    pub fn swaps_since_progress(&self) -> usize {
+        self.swaps_since_progress
+    }
+
+    pub fn last_applied_swap(&self) -> Option<(usize, usize)> {
+        self.last_applied_swap
+    }
+}
+
+#[derive(Debug, Clone)]
+pub struct RngState {
+    rng: Pcg64Mcg,
+}
+
+impl RngState {
+    pub fn new(seed: u64) -> Self {
+        Self {
+            rng: Pcg64Mcg::seed_from_u64(seed),
+        }
+    }
+
+    pub fn next_u64(&mut self) -> u64 {
+        self.rng.random::<u64>()
+    }
+
+    pub fn gen_index(&mut self, upper: usize) -> usize {
+        if upper <= 1 {
+            0
+        } else {
+            self.rng.random_range(0..upper)
+        }
+    }
+
+    pub fn gen_f64(&mut self) -> f64 {
+        self.rng.random::<f64>()
+    }
+
+    pub fn shuffle_slice<T>(&mut self, values: &mut [T]) {
+        if values.len() <= 1 {
+            return;
+        }
+        for i in (1..values.len()).rev() {
+            let j = self.rng.random_range(0..=i);
+            values.swap(i, j);
+        }
+    }
+}
+```
+
+---
+
+## 4) Baseline: LightSABRE (what you’re starting from)
+
+Your initial `candidate.rs` is an implementation of Qiskit LightSABRE, You can mutate it to achieve a better algorithm.
+
+### Core heuristic skeleton
+
+It is a greedy heuristic-search router that maintains a **front layer** of currently executable two-qubit gates in the dependency DAG, enumerates **candidate SWAPs touching qubits in the front layer**, and chooses the best SWAP by a cost function based primarily on **graph distances** between mapped qubits for the front layer plus a **lookahead set**, with an optional **decay** factor to discourage repeatedly swapping the same qubits.
+
+There are several techniques to improve runtime and quality:
+
+* efficient scoring (relative/delta evaluation rather than full recomputation),
+* multiple trials,
+* “release valve” behavior to guarantee progress on hard cases,
+* broader support obligations such as disjoint coupling graphs and control flow.
+
+---
+
+Your policy can evolve far beyond “classic LightSABRE scoring”, as long as you stay inside the engine’s interface by providing correct `choose_best_initial_layout` and `choose_best_swap` policy, and finish routing for the full benchmark suite within the time limit of 1000s.
+Use your imagination to design novel algorithms. You can change the heuristic arbitrarily, using beam/tabu/MCTS/simmulated annealing, anything you want. Believe in yourself that your own policy might be far better.
+Analyze the feedback from previous runs because they provide you with grounded information about the real performance of designed algorithms, and you can make modifications accordingly.
+
+
+## 5) Submission checklist
+- `candidate.rs` compiles without modifying any other file.
+- Your returned evolve block is self-contained: every struct, helper, `impl Default`, and `impl Policy` needed from the previous evolve block is still present unless you intentionally removed or replaced it with a valid alternative.
+- Policy still selects only legal swaps (edges in the coupling graph).
+- Deterministic given the seed.
+- Leaves control-flow and disjoint-topology handling to the fixed engine (do not disable them).

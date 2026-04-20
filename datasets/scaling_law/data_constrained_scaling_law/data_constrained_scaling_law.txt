@@ -1,0 +1,42 @@
+Discover a scaling law function that models the relationship between training data characteristics and model loss under data-constrained conditions.
+
+**IMPORTANT: The scaling law function must use no more than 7 parameters.**
+
+Focus on mathematical accuracy across different data scales, cross-dataset generalization, parameter efficiency (simple forms that can be fitted with limited data), and numerical/theoretical stability.
+
+**DATA CHARACTERISTICS (182 total data points):**
+- Features: [unique_tokens, params, tokens] - 3D input
+- Labels: loss - scalar output
+- Dataset size: 161 
+- Parameter range (P): 1.1e8 to 1.1e9 (100M to 1.1B parameters)
+- Token count range (D): 1e9 to 1e12 tokens
+- Unique tokens range: 1e7 to 5e8 unique tokens
+- Loss range: 1.8 to 7.2 (cross-entropy loss)
+- Model architectures: Transformer variants with different parameterizations
+- Data explores scaling under token/unique-token constraints
+
+The function signatures must remain:
+
+```python
+def scaling_law_func(data_points, params):
+    # data_points: (N,3) array with columns [unique_tokens, params, tokens]
+    # tokens: Array of token counts
+    # params: Array of parameter counts
+    # unique_tokens: Array of unique token counts
+    # params: Array of up to 7 parameters
+    # Returns: Predicted loss values
+
+def fit_scaling_law(data_points, loss_values):
+    # data_points: (N,3) array with columns [unique_tokens, params, tokens]
+    # loss_values: Array of corresponding loss values
+    # Returns: Optimized parameters (up to 7 parameters)
+```
+
+Write all improvements between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END markers.
+
+You are not allowed to use input-dependent features in scaling_law_func, e.g., median / min / max / etc.
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+
+The time limit for each program evaluation is 600 seconds.
+

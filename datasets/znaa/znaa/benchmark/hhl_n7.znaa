@@ -1,0 +1,217 @@
+1q u2 0
+1q u2 1
+1q u2 2
+1q u2 3
+1q u2 4
+1q u2 5
+2q cz 0 5
+1q u3 5
+2q cz 0 5
+1q u3 5
+2q cz 1 5
+1q u3 1
+1q u3 5
+2q cz 1 5
+1q u1 1
+1q u3 5
+2q cz 2 5
+1q u3 2
+1q u3 5
+2q cz 2 5
+1q u1 2
+1q u3 5
+2q cz 3 5
+1q u3 3
+1q u3 5
+2q cz 3 5
+1q u1 3
+1q u3 5
+2q cz 4 5
+1q u3 4
+1q u3 5
+2q cz 4 5
+1q u1 4
+2q cz 3 4
+1q u3 4
+2q cz 3 4
+1q u3 4
+2q cz 2 4
+1q u3 4
+2q cz 2 4
+2q cz 2 3
+1q u3 3
+2q cz 2 3
+1q u3 3
+1q u3 4
+2q cz 1 4
+1q u3 4
+2q cz 1 4
+2q cz 1 3
+1q u3 3
+2q cz 1 3
+2q cz 1 2
+1q u3 2
+2q cz 1 2
+1q u3 2
+1q u3 3
+1q u3 4
+2q cz 0 4
+1q u3 4
+2q cz 0 4
+2q cz 0 3
+1q u3 3
+2q cz 0 3
+2q cz 0 2
+1q u3 2
+2q cz 0 2
+2q cz 0 1
+1q u3 1
+2q cz 0 1
+1q u2 0
+1q u2 1
+1q u2 2
+1q u2 3
+1q u2 4
+1q u3 5
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 3 6
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 2 6
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 3 6
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 1 6
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 3 6
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 2 6
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 3 6
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 0 6
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 3 6
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 2 6
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 3 6
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 1 6
+1q u2 1
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 3 6
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 2 6
+1q u2 2
+1q u3 6
+2q cz 4 6
+1q u3 6
+2q cz 3 6
+1q u2 3
+1q u3 6
+2q cz 4 6
+1q u2 4
+1q u3 6
+2q cz 0 6
+1q u2 0
+2q cz 0 1
+1q u3 1
+2q cz 0 1
+2q cz 0 2
+1q u3 1
+1q u3 2
+2q cz 0 2
+2q cz 0 3
+1q u3 2
+2q cz 1 2
+1q u3 2
+2q cz 1 2
+1q u3 2
+1q u3 3
+2q cz 0 3
+2q cz 0 4
+1q u3 3
+2q cz 1 3
+1q u3 3
+2q cz 1 3
+1q u3 3
+2q cz 2 3
+1q u3 3
+2q cz 2 3
+1q u3 3
+1q u3 4
+2q cz 0 4
+1q u3 4
+2q cz 1 4
+1q u3 4
+2q cz 1 4
+1q u3 1
+1q u3 4
+2q cz 2 4
+1q u3 4
+2q cz 2 4
+1q u1 2
+1q u3 4
+2q cz 3 4
+1q u3 4
+2q cz 3 4
+1q u1 3
+1q u3 4
+2q cz 4 5
+1q u3 4
+1q u3 5
+2q cz 4 5
+1q u2 4
+1q u3 5
+2q cz 3 5
+1q u3 3
+1q u3 5
+2q cz 3 5
+1q u2 3
+1q u3 5
+2q cz 2 5
+1q u3 2
+1q u3 5
+2q cz 2 5
+1q u2 2
+1q u3 5
+2q cz 1 5
+1q u3 1
+1q u3 5
+2q cz 1 5
+1q u2 1
+1q u3 5
+2q cz 0 5
+1q u3 5
+2q cz 0 5
+1q u2 0
+1q u3 5
+1q u2 6

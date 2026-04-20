@@ -1,0 +1,5 @@
+Find an n×n matrix H with elements equal to 1 or −1 of size 29 to maximize |det(H)|.
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+
+The time limit for each program evaluation is 350 seconds.

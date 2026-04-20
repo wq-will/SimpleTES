@@ -1,0 +1,42 @@
+Discover a scaling law function that models the relationship between learning rate, batch size, data size, model parameters and training loss.
+
+**IMPORTANT: The scaling law function must use no more than 26 parameters.**
+
+Focus on mathematical accuracy across different hyperparameter scales, cross-configuration generalization, parameter efficiency (simple forms that can be fitted with limited data), and numerical/theoretical stability.
+
+**DATA CHARACTERISTICS (2702 total data points):**
+- Features: [lr, bsz, data_size, non_embedding_param_size] - 4D input
+- Labels: lm_loss - scalar output
+- Dataset size: 2702 total
+- Learning rate range: 2.44e-4 to 2.21e-2 (logarithmically spaced)
+- Batch size range: 16 to 2048 (powers of 2)
+- Data size range: 2.0e9 to 1.0e11 tokens (2B to 100B tokens)
+- Parameter range: 6.00e7 to 1.07e9 (60M to 1.07B non-embedding parameters)
+- Loss range: 2.1 to 3.7 cross-entropy loss
+- Comprehensive hyperparameter sweep covering learning rate and batch size effects
+
+The function signatures must remain:
+
+```python
+def scaling_law_func(data_points, params):
+    # data_points: (N,4) array with columns [lr, bsz, data_size, non_embedding_param_size]
+    # lr: Array of learning rates
+    # bsz: Array of batch sizes
+    # data_size: Array of data sizes
+    # non_embedding_param_size: Array of non-embedding parameter sizes
+    # params: Array of up to 26 parameters
+    # Returns: Predicted lm loss values
+
+def fit_scaling_law(data_points, loss_values):
+    # data_points: (N,4) array with columns [lr, bsz, data_size, non_embedding_param_size]
+    # loss_values: Array of corresponding lm loss values
+    # Returns: Optimized parameters (up to 26 parameters)
+```
+
+Write all improvements between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END markers.
+
+You are not allowed to use input-dependent features in scaling_law_func, e.g., median / min / max / etc.
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+
+The time limit for each program evaluation is 600 seconds.

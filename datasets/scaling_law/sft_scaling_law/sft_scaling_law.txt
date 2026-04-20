@@ -1,0 +1,39 @@
+Discover a scaling law function that models the relationship between supervised fine-tuning (SFT) data size and the resulting SFT loss.
+
+**IMPORTANT: The scaling law function must use no more than 4 parameters.**
+
+Focus on mathematical accuracy across different model architectures, cross-dataset generalization, parameter efficiency (simple forms that can be fitted with limited data), and numerical/theoretical stability.
+
+**DATA CHARACTERISTICS:**
+- Features: [sft_data_size] - 1D input
+- Labels: sft_loss - scalar output
+- Dataset size: 504 (12 per group)
+- Data size range: 200 to 819,200 examples (14 exponentially-spaced sizes)
+- Model parameter range: 1.24e8 to 1.3e9 parameters (124M to 1.3B parameters)
+- Loss range: 1.7 to 4.9 cross-entropy loss
+- Datasets: Flan, Gigaword, and Wikiword instruction-tuning datasets
+- Model architectures: Various transformer-based language models
+- 42 distinct (model, dataset) configuration groups for cross-generalization
+
+The function signatures must remain:
+
+```python
+def scaling_law_func(data_points, params):
+    # data_points: (N,1) array with columns [sft_data_size]
+    # params: Array of up to 4 parameters
+    # Returns: Predicted loss values
+
+def fit_scaling_law(data_points, loss_values):
+    # data_points: (N,1) array with columns [sft_data_size]
+    # loss_values: Array of corresponding loss values
+    # Returns: Optimized parameters (up to 4 parameters)
+```
+
+Write all improvements between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END markers.
+
+You are not allowed to use input-dependent features in scaling_law_func, e.g., median / min / max / etc.
+
+Do this by evolving the code between # EVOLVE-BLOCK-START and # EVOLVE-BLOCK-END.
+
+The time limit for each program evaluation is 600 seconds.
+

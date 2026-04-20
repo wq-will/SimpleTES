@@ -1,0 +1,13 @@
+# Graph + numerical + solver stack required by the evaluator and utils_ae.
+networkx
+rustworkx
+scipy
+ortools
+pulp
+sympy
+shapely
+sortedcontainers
+numpy
+pandas
+numba
+deap

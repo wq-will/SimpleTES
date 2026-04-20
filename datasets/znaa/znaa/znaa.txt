@@ -1,0 +1,453 @@
+## 1. Problem Definition
+
+### Physical setting
+Neutral-atom quantum computers trap **individual neutral atoms** in vacuum with **optical tweezers** (focused laser beams) and use them as qubits. Unlike fixed superconducting qubits, atoms can be **shuttled** during the program so that **who can interact** changes over time. This document targets a **Zoned Neutral-Atom Architecture (ZNAA)**: space is split into **zones** (notably storage vs entangling), and the compiler must respect that geometry when scheduling gates and motion.
+
+### Hardware model: SLM and AOD
+- **SLM (static lattice):** A **fixed** grid of traps—think of it as the **memory board**. **Spatial light modulators** imprint the pattern. In ZNAA it includes at least a **Storage zone** (idle qubits, better coherence) and an **Entangling zone** (where multi-qubit interactions are executed). Coordinates on these grids are what the **placer** assigns.
+- **AOD (mobile transport):** **Acousto-optic deflectors** provide **movable** row/column tweezer lines—think of a **routing bus**. They **pick up** atoms from SLM (**Open**), **move** the line geometry (**Move**), and **drop** atoms onto SLM sites (**Close**). The **router** emits legal sequences of these ops so the machine state matches each target placement snapshot.
+
+### Gate execution on this machine
+- **1Q gates:** Implemented as **local laser pulses** on selected qubits at their current locations (subject to the machine API).
+- **2Q gates (Rydberg):** The machine applies a **global entangling pulse** over the entangling region: it is **not** a naive “one isolated pair at a time” API. Any two atoms that are **simultaneously** in the entangling zone and **close enough** (within **`rydberg_radius`** and pairing rules) can **interact in the same pulse**. The compiler must therefore place atoms so the **set** of intended pairs matches the **global** 2Q layer, with no stray unpaired candidate.
+
+### Compiler role (what you build)
+Your job is to design a **compiler algorithm** with four components—**`Scheduler`**, **`ReuseAnalyzer`**, **`Placer`**, **`Router`**—that turns a logical **`ZNAACircuit`** into a **solver-produced plan** whose stages embed **`ZNAAOperation`** streams. Concretely: **schedule** gates into parallel **1q** / **2q** stages; **analyze** optional **reuse** across adjacent 2Q layers; **place** full **(zone, x, y)** snapshots; **route** AOD motion between consecutive snapshots. Success means a **strictly legal** plan that preserves the circuit; good solutions also **shorten** wall-clock time and **reduce** costly transport while improving **fidelity**-related metrics.
+
+### Mandatory rules and scoring
+Treat this document’s **pipeline contracts**, **placement schema**, and **physical-operation** rules as **hard** requirements. Violations fail the circuit for scoring: per-circuit score is **`-1.0`** (see scoring section elsewhere if present), even when the rest of the pipeline looks plausible.
+
+### Optimization priorities
+First achieve **correctness** on all benchmark circuits (**maximize `success_over_total`**). Only then optimize **runtime** and **fidelity**-cost: fewer unnecessary operations, shorter motion, and fewer illegal shortcuts. Runtime and fidelity **both** matter; keep placements and routes **physically valid** at every step.
+
+## 2. Pipeline (scheduler + reuse analyzer + placer + router)
+
+### Scheduler — `schedule(circuit)`
+#### Input format
+- `circuit: ZNAACircuit` — ordered logical gates with qubit indices starting from 0.
+#### Output format
+- `list[ZNAAStage]` — each stage is logically typed **`1q`** or **`2q`** (aliases like `rydberg` normalize to **`2q`**).
+
+### Reuse analyzer — `analyze(stages)`
+#### Input format
+- `stages: list[ZNAAStage]` — the scheduler output, in stage order.
+#### Output format
+- `list[list[int]]` — **stage-aligned** with `stages`: for each stage index, a list of logical qubit IDs marked for **outgoing reuse** toward the next 2Q-relevant context. **Only `2q` stages may use a non-empty reuse row.**
+- **Length:** **`len(reuse_info) == len(stages)`** — exactly **one** reuse row per scheduler stage index `i` (`reuse_info[i]` belongs to `stages[i]`).
+
+### Placer — `place(stages, reuse_info)`
+#### Input format
+- `stages: list[ZNAAStage]` and `reuse_info: list[list[int]]` — same length as `stages`, row `i` describes reuse flags for stage `i`.
+#### Output format
+- **Primary return** `placements_by_2q_stage: list[list[list[tuple]]]` — nested lists mean:
+  - **Outermost list**: one entry per **non-empty `2q` stage** (a stage with `stage_type == "2q"` and at least one gate), in **the same order** those stages appear in `stages`. Call that index `gi`; it lines up with the solver’s `two_q_stage_indices[gi]`.
+  - **Length (outermost):** **`len(placements_by_2q_stage) ==` the number of non-empty `2q` stages** in `stages` (same as `len(two_q_stage_indices)` in the solver).
+  - **Middle list** (`group`): an **ordered sequence of full placement snapshots** for that 2Q stage. `group[0]` is the layout **at the start of that 2Q stage** (immediately before the stage’s global 2Q pulse in the stitched plan). `group[1]`, `group[2]`, … are further snapshots **within the same 2Q stage**; the solver routes **pairwise** along the chain `snap[k] -> snap[k+1]`. A minimal valid group is length 1 (only the pre-2Q layout).
+  - **Inner list** (`snap`): length **number of logical qubits** `n_q`, indexed by **logical qubit id** `q` (0-based, contiguous indices `0..n_q-1` as used elsewhere in the pipeline). `snap[q]` is one cell tuple for qubit `q`.
+  - **Each tuple** `snap[q]` is exactly **three** scalar-like values `(zone, x, y)`: `zone` is `0` (storage) or `1` (entangling); `x` and `y` are **integer-valued** coordinates in that zone’s grid. Together they fix one legal SLM cell per qubit for that snapshot.
+- **`initial_placement` (attribute on the placer instance, not the return value of `place`)**: after `place(...)` returns, the solver reads `placer.initial_placement` — a single full snapshot `list[tuple]` of length `n_q`, same `(zone, x, y)` format as above, with **every** qubit in **storage** (`zone == 0`). This is the layout **before any 2Q-stage routing**; the first plan block maps qubits from it. Implementations must set this field when computing placements.
+
+### Router — `route(placements)`
+#### Input format
+- `placements: list[list[tuple]]` — each item is one **full** qubit-indexed placement snapshot; consecutive pairs are routed in order. The solver may invoke routing on **only two** adjacent snapshots at a time.
+#### Output format
+- `list[list[ZNAAOperation]]` — **one route segment** (a Python list of operations) per **adjacent** placement pair in the input list.
+- **Length:** if `route` is called on a chain **`placements`** of length **`K`** (i.e. **`K`** full snapshots), the return must satisfy **`len(returned_segments) == K - 1`**, segment `j` realizing the transition **`placements[j] -> placements[j+1]`**. (The usual solver call is **`K == 2`**, yielding **one** segment.)
+
+Pipeline-wide, downstream stages assume **exact** adherence to the **length contracts** spelled out above for reuse, placer, and router outputs, plus consistent **`n_q`** width and valid `(zone, x, y)` tuples; any mismatch is a hard failure, not a warning.
+- **Indexing convention:** logical **qubit IDs are 0-based** (aligned with the circuit / placement vectors). On SLM and AOD grids, an **empty** cell is represented by **`_EMPTY_QUBIT_CELL == -1`**, not by qubit id `0`.
+
+## 5. Rules for Placer
+### What this component does
+- The placer chooses **where** every logical qubit sits on the SLM at important snapshots: a full **initial** layout (all storage) via `placer.initial_placement`, plus **grouped** placement sequences for each non-empty `2q` stage (`placements_by_2q_stage`).
+- Each snapshot is a **full-width** vector: index `q` is logical qubit `q`, value `(zone, x, y)` is its cell—`zone=0` storage, `zone=1` entangling—so the router knows the exact **from/to** geometry for every qubit when it builds `ZNAAOperation` streams.
+- Within a 2Q group, multiple snapshots describe **intra-stage** evolution (e.g. rearrange after some routing); the solver connects them with **pairwise** route calls in order, so the placer effectively specifies the **target geometry** the router must realize.
+### Constraints
+- In each 2Q stage first placement, qubits involved in 2Q gates must be in entangling zone (`zone=1`). Non-involved qubits must stay in storage zone (`zone=0`) to satisfy evaluator checks and reduce unnecessary exposure.
+- Each 2Q pair must satisfy **entangling adjacency** as checked by the evaluator (`_adjacent_entangling_columns`). For two qubits at placements `(zone, x, y)` with **integer** `x, y`, **adjacent** means all of: **`zone == 1` (entangling) for both**; **same `x`**; **same `y // 2`** (same pair-row band after integer division); and **`|y_a - y_b| == 1`** (column indices are immediate neighbors—the precise condition implemented in code). A 2Q pair that is not adjacent under this definition causes `PlacementValidationError`.
+- Placement tuples must stay valid as `(zone,x,y)` with integer-like coordinates and legal zone ids. Broken tuple schema can fail solver/evaluator before route execution.
+- Reused qubits must be pinned correctly across grouped placements and across adjacent 2Q blocks. If a reused qubit moves when it should stay fixed, evaluator flags placement inconsistency.
+- After the last scheduled stage ends, **all** qubits must be in the storage zone (`zone=0`). Practically: the final snapshot of the last non-empty `2q` stage group (or `initial_placement` if there are no `2q` stages) must place every logical qubit in storage.
+### How it influences time/fidelity, and how to improve
+- Placer quality directly controls router workload because route operations realize placement deltas. Better geometric continuity usually means fewer or shorter moves.
+- **Distance still matters:** shorter SLM/AOD travel usually means **less move time** and often simpler routes, so reducing displacement between consecutive snapshots is a **strong baseline** goal. Do not ignore proximity—only trade extra distance for parallelism when the routing win is clear.
+- Keeping non-active qubits in storage reduces time outside storage (`timeE`) and helps decoherence-related fidelity terms. Entangling only what is needed is both valid and beneficial.
+- Incorporate router movability signals (batch compatibility, likely non-crossing groups) into placement decisions. A placement that is slightly farther but far more parallelizable can still be globally faster.
+- Minimize qubit movement events whenever possible: reducing movement usually reduces transfer pick/drop events, which improves fidelity and lowers total time cost.
+- Favor deterministic tie-break rules in assignment/matching. This stabilizes benchmark variance and makes iterative optimization more reliable.
+### How to debug
+- For `PlacementValidationError`, first inspect the failing 2Q stage first placement: involved qubits in entangling, others in storage, and pair adjacency. These are the most common root causes.
+- If errors mention reused qubits moved, compare previous 2Q block last placement vs current 2Q block first placement for those qubits. Then check intra-group snapshots where reused qubits should remain fixed.
+- For `FinalStorageZoneError`, check the machine positions after the last stage: every qubit should report `zone='storage'`. On the placer side, ensure the last snapshot of the last non-empty `2q` group (or `initial_placement` when no `2q` stage exists) has `zone=0` for all qubits, and that the router is allowed to end with a `Close` that drops every carried qubit back onto empty storage cells.
+- If routing later fails but placement was recently changed, diff old/new placements to identify which qubits created impossible or high-conflict routes. Debug placement and routing jointly, not independently.
+
+## 7. Evolution Rules
+### Modify only between evolve markers (**mandatory**)
+- **Non-negotiable:** if `# EVOLVE-BLOCK-START` / `# EVOLVE-BLOCK-END` markers exist, you only need to modify the content strictly inside the span between them. You do not need to repeat any content outside the markers, and it will not be detected by the system. Your submission must include the opening and closing markers themselves exactly; otherwise it will fail.
+### Output complete code inside editable span (**mandatory**)
+- The evolve block must be **self-contained and executable**: full class bodies, **all** helpers, **no** `...`, `# TODO`, “rest omitted”, or partial diffs. Anything that **cannot** be imported and run **as written** is an **automatic** failure. **Do not** assume the reader will merge your answer with older code mentally—if it is not spelled out between the markers, it does not exist.
+### Do not hack runtime or evaluator assumptions (**mandatory**)
+- **Strictly forbidden:** monkey-patching or rebinding `ZNAAMachine`, `Solver`, hardware configs, timing flags (e.g. `skip_open_close_chain_time`), evaluator hooks, or any shortcut that falsifies physics, scores, or checks. **Zero tolerance**--such tactics are treated as **integrity violations**, not clever optimizations, and yield **failed** runs and **`-1.0`** scoring.
+### Keep component class and method names stable
+- Do **not** rename the four pipeline classes **`Scheduler`**, **`ReuseAnalyzer`**, **`Placer`**, **`Router`**, or their entry methods **`schedule`**, **`analyze`**, **`place`**, **`route`**. The evaluator expects these exact identifiers when wiring the pipeline; changing them usually causes import/attribute failures and a **failed** circuit with per-circuit score **`-1.0`**.
+### You can improve one component per run
+- Iterative, focused optimization is preferred over broad rewrites because failures are easier to localize and revert. Improve one component at a time unless a coupled change is clearly required.
+### Randomized algorithms
+- If you use **any** stochastic or randomized logic (e.g. `random`, `numpy.random`, or seeded shuffles), set **all** random number seeds to **`1`** so compilation is **reproducible** and evaluator scores are stable across runs.
+### Time budget and algorithmic complexity
+- The evaluator currently enforces a **total runtime budget of 1800 seconds for the whole evaluation run**. A separate per-circuit compilation timeout may be disabled in the current configuration, so you should not rely on an early kill for pathological cases. Your scheduler / reuse / placer / router must therefore **finish comfortably within the global budget** on the benchmark set--**avoid** exponential blow-ups, brute force over the full configuration space, or unstoppable loops. **Prefer** clearly **polynomial-time** procedures (e.g. near-linear or \(O(n^3)\) matching on problem-size parameters) and keep constant factors reasonable.
+
+## 8. Current Task
+### Your task is to improve the placer component of the compilation algorithm, you should provide a Placer class with place method between the evolve block markers, and you should not change anything about scheduler, reuseanalyzer and router.
+
+## 9. Key Insights
+### For placer, the key to huge improve is the consideration of concurrency in routing, so you must figure out how the router pack qubit movements into parallel rearrangement job, and try to give a more parallelizable placements in your placer algorithm.
+### You should consider the placements as a whole problem, instead of placeing qubit stage by stage
+ - If you find it hard to give a placements with high concurrency, you should try modify the placements of previous stage.
+ - After assigning positions for every qubit in every stage, your algorithm should tune placements in some stage to get higher concurrency and lower distance
+ - You can try RTT: after placing the last stage, treat the final placements like an initial placement, and redo the problem reversely, this procedure can be repeated for several time.
+### Despite the importance of concurrency, distance is also important, so you should try to place qubits closer if that won't hurt the concurrency. You are highly recommanded to use the calc_physical_coordinate method in AbstractPlacer class, which takes (zone, r, c) as input, and output the real physical position (x, y). More details are provided below.
+### Treat reuse info as hints, not hard constraints. Reuse more qubits can reduce transfer operation and lead to higher fidelity, but there might be some trade off. If reuse is in conflict with routing concurrency, you will need to consider carefully.
+
+
+## 10. Evaluator feedback on uneven performance
+- If your algorithm performs very well on some circuits but significantly worse on others, treat that imbalance as a **high-priority diagnostic signal**, not as incidental noise. The evaluator may return a **worst 2Q-stage window** so you can investigate the root cause of the weak cases instead of only reading aggregate scores.
+- Placement snapshots are shown as zero-based qubit-labeled strings such as **`q0: [0, 0, 0], q1: [0, 2, 0]`** so the coordinates can be tied back to individual qubits immediately.
+- The stage summary inside error snapshots is compact and pair-based, for example **`(q0, q1)`** or **`(q0, q1), (q2, q3)`** instead of a verbose gate list.
+- The reported stage index is the continuous **2Q-stage ordinal** that ignores intervening 1Q stages, so it should line up with the 2Q-specific numbering used in the failure snapshot.
+- Do not ignore this signal. Analyze why the poor circuits regress, identify the underlying bottleneck, and improve the weak cases directly before tuning anything else.
+
+## 11. Hardware configuration
+def config_test():
+    return ZNAAConfig(
+        storage_shape=(100, 100),
+        entangling_shape=(7, 40),
+        readout_shape=(20, 20),
+        time_1q=0.625, time_2q=0.360, time_readout=500.0, time_transfer=15.0,
+        fidelity_1q=0.9997, fidelity_2q=0.995, fidelity_readout=0.998, fidelity_transfer=0.999, fidelity_execution=0.995,
+        coherence_time_storage=1e8, coherence_time_else=1.5e6, aod_accelerate=0.00275,
+        distance_storage=(3.0, 3.0), distance_entangle=(10.0, 12.0), distance_readout=(6.0, 6.0),
+        distance_interzone=10.0, rydberg_radius=2.0, delta=2.0, name="config_testonly"
+    )
+
+    
+-----
+
+The following is part of code in utils_ae.py.
+
+class ZNAAConfig:
+    """Hardware configuration parameters for the ZNAA Machine."""
+    storage: tuple[int, int] # shape of slm in storage zone
+    entangling: tuple[int, int] # shape of slm in entangling zone
+    
+    time_1q: float 
+    time_2q: float
+    time_transfer: float
+    
+    fidelity_1q: float
+    fidelity_2q: float
+    fidelity_transfer: float
+    fidelity_execution: float
+    
+    coherence_time_storage: float
+    coherence_time_else: float
+    aod_accelerate: float
+    
+    distance_storage: tuple[float, float]
+    distance_entangle: tuple[float, float]
+    distance_interzone: float
+    
+    rydberg_radius: float
+    delta: float # minimal distance between AOD
+    name: str
+
+class ZNAAGate:
+    gate_type: str  # '1q' or '2q'
+    gate_name: str
+    qubits: list[int]
+    uuid: uuid.UUID
+    
+    def __init__(self, gate_type: str, gate_name: str, qubits: list[int]): ...
+
+class ZNAACircuit:
+    """Mutable ordered gate list; used by schedulers that peel frontier gates."""
+    gates: list[ZNAAGate]
+    qubits: set[int]
+    n_q: int  # Total qubit count
+
+    def __init__(self, gates: Optional[list[ZNAAGate]] = None): ...
+    def append_gate(self, gate: ZNAAGate): ...
+    def extend_gates(self, gates: list[ZNAAGate]): ...
+    def is_empty(self) -> bool: ...
+    def qubit_count(self) -> int: ...
+    def remove_gate(self, gate: ZNAAGate): ...
+
+class ZNAAStage:
+    """A batch of gates scheduled together; stage_type is '1q' or '2q'."""
+    stage_type: str
+    gates: list[ZNAAGate]
+
+    def __init__(self, stage_type: str, gates: Optional[list[ZNAAGate]] = None): ...
+    def append_gate(self, gate: ZNAAGate): ...
+    def extend_gates(self, gates: list[ZNAAGate]): ...
+    def is_empty(self) -> bool: ...
+
+class ZNAAOperation:
+    """Base class for all ZNAA Machine operations."""
+    type_name: str
+
+class Operation_Open(ZNAAOperation):
+    """
+    Add AOD row/column lines and optionally pick a subset of qubits.
+    Input format:
+    - ``rows``/``columns`` are axis values in the chosen open zone.
+    - ``pick_ids`` limits which occupied coordinates are loaded onto AOD.
+    """
+    type_name = "open"
+    def __init__(self, rows: list[float] = None, columns: list[float] = None, pick_ids: set[int] = None, open_zone: str | None = None): ...
+
+class Operation_Close(ZNAAOperation):
+    """
+    Remove selected AOD lines and drop carried qubits back to SLM.
+    Input format:
+    - ``rows``/``columns`` refer to currently open AOD lines.
+    - target SLM coordinates must be legal and empty.
+    """
+    type_name = "close"
+    def __init__(self, rows: list[float] = None, columns: list[float] = None, close_zone: str | None = None): ...
+
+class Operation_Move(ZNAAOperation):
+    """
+    Move active AOD lines to target coordinates in one zone.
+    Input format:
+    - ``target_rows`` and ``target_columns`` are ascending lists.
+    - lengths must match currently open AOD row/column counts.
+    """
+    type_name = "move"
+    def __init__(self, target_zone: str, target_rows: list[float], target_columns: list[float]): ...
+
+class AbstractScheduler:
+    """
+    Interface contract for stage schedulers.
+    Expected input: ``ZNAACircuit`` with ordered logical gates.
+    Expected output: ``list[ZNAAStage]`` where each stage is type ``1q`` or ``2q``.
+    """
+    name: str
+    version: str
+    config: ZNAAConfig
+    
+    def __init__(self, name: str = "Abstract Scheduler", version: str = "0.0", *, config_factory: Callable[[], ZNAAConfig]): ...
+    def schedule(self, circuit: ZNAACircuit) -> list[ZNAAStage]: ...
+
+class AbstractReuseAnalyzer:
+    """
+    Interface contract for reuse analyzers.
+    Expected input: scheduler output ``list[ZNAAStage]``.
+    Expected output: stage-aligned ``list[list[int]]`` describing reusable logical qubits.
+    """
+    name: str
+    version: str
+    config: ZNAAConfig
+    
+    def __init__(self, name: str = "Abstract Reuse Analyzer", version: str = "0.0", *, config_factory: Callable[[], ZNAAConfig]): ...
+    def analyze(self, stage: list[ZNAAStage]) -> list[list[int]]: ...
+
+class AbstractPlacer:
+    """
+    Interface contract for placers.
+    Expected input: ``stages`` and stage-aligned ``reuse_info``.
+    Expected output: grouped placements for each non-empty 2Q stage: ``list[list[list[(zone,row,col)]]]``.
+        - implementation should also expose ``initial_placement`` as one full initial placement list.
+    """
+    name: str
+    version: str
+    config: ZNAAConfig
+    
+    def __init__(self, name: str = "Abstract Placer", version: str = "0.0", *, config_factory: Callable[[], ZNAAConfig]): ...
+    def calc_physical_coordinate(self, zone: int | str, row: int, col: int) -> tuple[float, float]:
+        """
+        The hardware parameters:
+        - ``shape_storage = (S_r, S_c)``
+        - ``shape_entangling = (E_r, E_c)``
+        - ``distance_storage = (d_sr, d_sc)``
+        - ``distance_entangle = (d_er, d_ec)``
+        - ``distance_interzone = d_int``
+        - ``rydberg_radius = r_ryd``
+
+        When ``zone`` is storage:
+        - ``x0 = d_er * (E_r - 1) + d_int``
+        - ``y0 = -d_sc * (S_c - 1) / 2``
+        - ``x = x0 + (S_r - 1 - row) * d_sr``
+        - ``y = y0 + col * d_sc``
+
+        When ``zone`` is entangling:
+        - let ``E_half = max(1, E_c // 2)``
+        - ``x = (E_r - 1 - row) * d_er``
+        - if ``col % 2 == 0``:
+          ``y0 = -d_ec * (E_c / 2 - 1) / 2 - r_ryd / 2``
+          ``y = y0 + (col // 2) * d_ec``
+        - if ``col % 2 == 1``:
+          ``y0 = -d_ec * (E_c / 2 - 1) / 2 + r_ryd / 2``
+          ``y = y0 + (col // 2) * d_ec``
+
+        Return ``(x, y)``.
+        """
+        ...
+    def place(self, stages: list[ZNAAStage], reuse_info: list[list[int]]) -> list[list[list[tuple]]]: ...
+
+class Router(AbstractRouter):
+    @staticmethod
+    def _compatible_2d(a, b):
+        for i in (0, 2):
+            s0, d0, s1, d1 = a[i], a[i + 1], b[i], b[i + 1]
+            if (s0 == s1 and d0 != d1) or (d0 == d1 and s0 != s1) or (s0 < s1 and d0 >= d1) or (s0 > s1 and d0 <= d1):
+                return False
+        return True
+
+    def _to_map(self, pl: list[tuple[int, int, int]], layout: dict):
+        sid, ent, nrs = layout["storage"], layout["ent"], layout["slm"][layout["storage"]]["n_r"]
+        out = []
+        for zone, row, col in pl:
+            if zone == 0:
+                out.append((sid, nrs - 1 - row, col))
+            else:
+                slm = ent[col % 2]
+                out.append((slm, layout["slm"][slm]["n_r"] - 1 - row, col // 2))
+        return out
+
+    def _get_offset(self, z):
+        if z == 0:
+            return (1/self.config.distance_storage[0], 1/self.config.distance_storage[1])
+        return (1/self.config.distance_entangle[0], 1/(self.config.distance_entangle[1]-self.config.rydberg_radius))
+
+    def _append_ops(self, ops: list[ZNAAOperation], src_pl: list[tuple[int, int, int]], dst_pl: list[tuple[int, int, int]], moved: list[int]):
+        zone_name = {0: "storage", 1: "entangling"}
+        grouped: dict[tuple[int, int], list[int]] = {}
+        for q in moved:
+            grouped.setdefault((int(src_pl[q][0]), int(dst_pl[q][0])), []).append(q)
+        for (sz, dz), ids in grouped.items():
+            offset = self._get_offset(sz)
+            if not ids:
+                continue
+
+            # Build src->dst one-to-one maps for row/column lines.
+            row_to_dst: dict[int, int] = {}
+            col_to_dst: dict[int, int] = {}
+            by_src_row: dict[int, list[int]] = {}
+            for q in ids:
+                sr = int(src_pl[q][1])
+                sc = int(src_pl[q][2])
+                dr = int(dst_pl[q][1])
+                dc = int(dst_pl[q][2])
+                if sr in row_to_dst and row_to_dst[sr] != dr:
+                    raise RuntimeError(f"row mapping conflict for src row {sr}: {row_to_dst[sr]} vs {dr}")
+                if sc in col_to_dst and col_to_dst[sc] != dc:
+                    raise RuntimeError(f"col mapping conflict for src col {sc}: {col_to_dst[sc]} vs {dc}")
+                row_to_dst[sr] = dr
+                col_to_dst[sc] = dc
+                by_src_row.setdefault(sr, []).append(int(q))
+
+            # Deterministic classification/sort by current source placement.
+            src_rows_sorted = sorted(by_src_row.keys())
+            for sr in src_rows_sorted:
+                by_src_row[sr].sort(key=lambda qid: int(src_pl[qid][2]))
+
+            active_rows: list[int] = []
+            active_cols: list[int] = []
+            cur_row_pos: dict[int, float] = {}
+            cur_col_pos: dict[int, float] = {}
+            base_col_pos: dict[int, float] = {}
+
+            for i, sr in enumerate(src_rows_sorted):
+                batch_ids = by_src_row[sr]
+                batch_cols = sorted({int(src_pl[q][2]) for q in batch_ids})
+
+                # One pick batch: open one row each time (plus any new columns needed now).
+                open_rows = [float(sr)]
+                open_cols = [float(c) for c in batch_cols if c not in cur_col_pos]
+                ops.append(
+                    Operation_Open(
+                        rows=open_rows,
+                        columns=open_cols,
+                        pick_ids={int(q) for q in batch_ids},
+                        open_zone=zone_name[sz],
+                    )
+                )
+
+                active_rows.append(sr)
+                cur_row_pos[sr] = float(sr)
+                for c in batch_cols:
+                    if c not in cur_col_pos:
+                        active_cols.append(c)
+                        cur_col_pos[c] = float(c)
+                        base_col_pos[c] = float(c)
+
+                next_cols: set[int] = set()
+                if i + 1 < len(src_rows_sorted):
+                    nr = src_rows_sorted[i + 1]
+                    next_cols = {int(src_pl[q][2]) for q in by_src_row[nr]}
+
+                    # After each pick, move existing AOD:
+                    # - newly opened row goes to current + 0.5
+                    # - columns toggle between base and base+0.5 by next-step usage.
+                    row_targets: list[float] = []
+                    for rkey in active_rows:
+                        cur = cur_row_pos[rkey]
+                        tgt = cur + offset[0] if rkey == sr else cur
+                        row_targets.append(tgt)
+                        cur_row_pos[rkey] = tgt
+
+                    col_targets: list[float] = []
+                    for ckey in active_cols:
+                        base = base_col_pos[ckey]
+                        if sz == 0:
+                            tgt = base if ckey in next_cols else base + offset[1]
+                        else:
+                            tgt = base if ckey in next_cols else base + offset[1] * (base % 2 - 0.5) * 2
+                        col_targets.append(tgt)
+                        cur_col_pos[ckey] = tgt
+
+                    ops.append(
+                        Operation_Move(
+                            target_zone=zone_name[sz],
+                            target_rows=sorted(row_targets),
+                            target_columns=sorted(col_targets),
+                        )
+                    )
+
+            # Final align to destination line coordinates, then drop.
+            final_rows = [float(row_to_dst[r]) for r in active_rows]
+            final_cols = [float(col_to_dst[c]) for c in active_cols]
+            ops.append(
+                Operation_Move(
+                    target_zone=zone_name[dz],
+                    target_rows=sorted(final_rows),
+                    target_columns=sorted(final_cols),
+                )
+            )
+            ops.append(Operation_Close(rows=sorted(final_rows), columns=sorted(final_cols), close_zone=zone_name[dz]))
+
+    def route(self, placements: list[list[tuple[int, int, int]]]) -> list[list[ZNAAOperation]]:
+        if len(placements) <= 1:
+            return []
+        layout, mapped = self.config.build_zone_layout(), []
+        for pl in placements:
+            mapped.append(self._to_map(pl, layout))
+        out = [[] for _ in range(len(placements) - 1)]
+        for i in range(len(mapped) - 1):
+            src_m, dst_m, remain = mapped[i], mapped[i + 1], [q for q in range(len(mapped[i])) if mapped[i][q] != mapped[i + 1][q]]
+            while remain:
+                vec = []
+                for q in remain:
+                    qx, qy = self.config.slm_site_xy(src_m[q])
+                    sx, sy = self.config.slm_site_xy(dst_m[q])
+                    vec.append((qx, sx, qy, sy))
+                pick = []
+                for j, cur in enumerate(vec):
+                    if all(self._compatible_2d(cur, vec[k]) for k in pick):
+                        pick.append(j)
+                moved = [remain[j] for j in pick]
+                self._append_ops(out[i], placements[i], placements[i + 1], moved)
+                used = set(moved)
+                remain = [q for q in remain if q not in used]
+        return out
