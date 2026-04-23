@@ -1,16 +1,22 @@
-<img src="picture/will-typography-c.png" alt="WILL" height="20">
+<p align="center">  
+<img src="picture/will-typography-c.png" alt="WILL" height="66">
+</p>
+
+---
 
 <div align="center">
 
-# SimpleTES
+[![Website](https://img.shields.io/badge/Website-SimpleTES-blue)](https://www.wizardquant.com/will/simpletes)
+[![Paper](https://img.shields.io/badge/Paper-arXiv-b31b1b)](https://arxiv.org/abs/2604.19341)
 
-**Evaluation-driven Scaling for Scientific Discovery**
+</div>
+
+
 
 Reference implementation behind the paper *Evaluation-driven Scaling for Scientific Discovery*.
 
 SimpleTES is a training-free search system for open-ended problems where "reason longer" is not enough. It spends test-time compute on the loop that actually drives discovery: **propose -> evaluate -> refine**.
 
-</div>
 
 <p align="center">
   <img src="picture/simpletes-overview.png" alt="SimpleTES overview" width="880">
