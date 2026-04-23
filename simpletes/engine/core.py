@@ -130,7 +130,7 @@ class SimpleTESEngine(SchedulerMixin):
         if self._qubit_routing_slot_mode:
             # Task-local hint consumed by qubit-routing evaluator for slot count fallback.
             os.environ.setdefault("QUBIT_ROUTING_SLOT_COUNT", str(config.eval_concurrency))
-            # Total per-evaluation timeout from SimpleEvolve evaluator worker.
+            # Total per-evaluation timeout from SimpleTES evaluator worker.
             os.environ["QUBIT_ROUTING_PARENT_EVAL_TIMEOUT_SECONDS"] = str(config.eval_timeout)
 
         
@@ -944,7 +944,7 @@ class SimpleTESEngine(SchedulerMixin):
             for entry in root.iterdir():
                 if not entry.is_dir():
                     continue
-                # Only touch auto-created namespaces from SimpleEvolve.
+                # Only touch auto-created namespaces from SimpleTES.
                 if not entry.name.startswith("se-qubit_routing-"):
                     continue
                 if self._evaluator_slot_cleanup_dir is not None and entry == self._evaluator_slot_cleanup_dir:

@@ -23,8 +23,6 @@ dependencies = [
     "pandas>=3.0.0",
     "protobuf>=6.33.5",
     "psutil>=7.2.2",
-    "qiskit==1.2.0",
-    "qiskit-qasm3-import==0.6.0",
     "questionary>=2.0.0",
     "rich>=13.0.0",
     "scikit-learn>=1.7.2",
@@ -35,6 +33,7 @@ dependencies = [
 
 [project.optional-dependencies]
 vllm = ["vllm>=0.5.0"]
+qubit_routing = ["qiskit==1.2.0", "qiskit-qasm3-import==0.6.0"]
 
 [build-system]
 requires = ["setuptools>=68", "wheel"]
