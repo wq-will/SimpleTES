@@ -17,6 +17,8 @@ _INITIAL_SHARED_CONSTRUCTION_ENV = "SIMPLETES_INITIAL_SHARED_CONSTRUCTION_PATH"
 
 from datetime import datetime
 import asyncio
+from functools import lru_cache
+import importlib.util
 import os
 import signal
 import sys
@@ -24,9 +26,6 @@ import traceback
 import uuid
 from pathlib import Path
 from typing import Any, Optional
-import fcntl
-import shutil
-import time
 
 from rich.panel import Panel
 
@@ -82,58 +81,19 @@ class SimpleTESEngine(SchedulerMixin):
         self._counter_lock = asyncio.Lock()
         self._db_lock = asyncio.Lock()
 
-
         # Qubit-routing evaluator slot namespace/caching env.
-        # Enabled for evaluators under datasets/qubit_routing/.
-        repo_root = Path(__file__).resolve().parents[2]
-        qubit_routing_root = (
-            repo_root / "datasets" / "qubit_routing"
-        ).resolve()
-        configured_evaluator = Path(config.evaluator_path).expanduser()
-        if not configured_evaluator.is_absolute():
-            configured_evaluator = (Path.cwd() / configured_evaluator).resolve()
-        else:
-            configured_evaluator = configured_evaluator.resolve()
-
-        self._qubit_routing_slot_mode = configured_evaluator.is_relative_to(
-            qubit_routing_root
-        )
-
-        self._evaluator_slot_root = Path(
-            os.environ.get(
-                "QUBIT_ROUTING_SLOT_ROOT",
-                "/tmp/simpletes-qubit-routing-slots",
+        self._qubit_routing_slot_workspace = None
+        if _is_qubit_routing_evaluator(config.evaluator_path):
+            slot_workspace_module = _load_qubit_routing_slot_workspace_module()
+            self._qubit_routing_slot_workspace = slot_workspace_module.QubitRoutingSlotWorkspace(
+                evaluator_path=config.evaluator_path,
+                instance_id=self.instance_id,
+                eval_concurrency=config.eval_concurrency,
+                eval_timeout=config.eval_timeout,
+                log_message=self._log,
+                printer=rich_print,
             )
-        ).expanduser()
-        self._evaluator_slot_cleanup_dir: Optional[Path] = None
-        self._evaluator_slot_cleanup_done: bool = False
-        self._evaluator_slot_auto_cleanup: bool = (
-            os.environ.get("QUBIT_ROUTING_SLOT_AUTO_CLEANUP", "1") != "0"
-        )
-        self._evaluator_slot_startup_janitor: bool = (
-            os.environ.get("QUBIT_ROUTING_SLOT_STARTUP_JANITOR", "1") != "0"
-        )
-        self._evaluator_slot_stale_ttl_seconds: float = float(
-            os.environ.get("QUBIT_ROUTING_SLOT_STALE_TTL_SECONDS", "86400")
-        )
-        self._evaluator_slot_namespace_lock_fd: Optional[int] = None
 
-        if self._qubit_routing_slot_mode and "QUBIT_ROUTING_SLOT_NAMESPACE" not in os.environ:
-            run_slot_namespace = (
-                f"se-qubit_routing-{self.instance_id}-{os.getpid()}-{uuid.uuid4().hex[:8]}"
-            )
-            os.environ["QUBIT_ROUTING_SLOT_NAMESPACE"] = run_slot_namespace
-            self._evaluator_slot_cleanup_dir = self._evaluator_slot_root / run_slot_namespace
-            self._cleanup_stale_evaluator_slot_namespaces()
-            self._acquire_evaluator_slot_namespace_lock()
-
-        if self._qubit_routing_slot_mode:
-            # Task-local hint consumed by qubit-routing evaluator for slot count fallback.
-            os.environ.setdefault("QUBIT_ROUTING_SLOT_COUNT", str(config.eval_concurrency))
-            # Total per-evaluation timeout from SimpleTES evaluator worker.
-            os.environ["QUBIT_ROUTING_PARENT_EVAL_TIMEOUT_SECONDS"] = str(config.eval_timeout)
-
-        
         # Load instruction
         with open(config.instruction_path, encoding="utf-8") as f:
             self.instruction = f.read()
@@ -902,125 +862,6 @@ class SimpleTESEngine(SchedulerMixin):
             # If cancelled while waiting on get(), current_node_id is None (nothing to clean up)
             pass
 
-    def _cleanup_evaluator_slot_workspace(self) -> None:
-        """Clean auto-created evaluator slot namespace (if any)."""
-        if not self._qubit_routing_slot_mode:
-            return
-        if self._evaluator_slot_cleanup_done:
-            return
-        self._evaluator_slot_cleanup_done = True
-
-        slot_dir = self._evaluator_slot_cleanup_dir
-        if slot_dir is None:
-            self._release_evaluator_slot_namespace_lock()
-            return
-        if not self._evaluator_slot_auto_cleanup:
-            rich_print(self._log("📁", f"[dim]Keeping evaluator slot workspace: {slot_dir}[/dim]"))
-            self._release_evaluator_slot_namespace_lock()
-            return
-
-        try:
-            shutil.rmtree(slot_dir, ignore_errors=True)
-            rich_print(self._log("🧹", f"[dim]Cleaned evaluator slot workspace: {slot_dir}[/dim]"))
-        except Exception as e:
-            rich_print(self._log("⚠", f"[yellow]Failed to clean evaluator slot workspace: {e}[/yellow]"))
-        finally:
-            self._release_evaluator_slot_namespace_lock()
-
-    def _cleanup_stale_evaluator_slot_namespaces(self) -> None:
-        """Delete stale auto-created slot namespaces from previous hard-killed runs."""
-        if not self._qubit_routing_slot_mode:
-            return
-        if not self._evaluator_slot_startup_janitor:
-            return
-        if self._evaluator_slot_stale_ttl_seconds <= 0:
-            return
-        try:
-            root = self._evaluator_slot_root
-            if not root.is_dir():
-                return
-            now = time.time()
-            removed = 0
-            for entry in root.iterdir():
-                if not entry.is_dir():
-                    continue
-                # Only touch auto-created namespaces from SimpleTES.
-                if not entry.name.startswith("se-qubit_routing-"):
-                    continue
-                if self._evaluator_slot_cleanup_dir is not None and entry == self._evaluator_slot_cleanup_dir:
-                    continue
-                try:
-                    if now - entry.stat().st_mtime < self._evaluator_slot_stale_ttl_seconds:
-                        continue
-                except FileNotFoundError:
-                    continue
-
-                lock_fd: Optional[int] = None
-                try:
-                    lock_path = entry / ".namespace.lock"
-                    lock_fd = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o666)
-                    try:
-                        fcntl.flock(lock_fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
-                    except BlockingIOError:
-                        continue
-                    shutil.rmtree(entry, ignore_errors=True)
-                    removed += 1
-                except Exception:
-                    continue
-                finally:
-                    if lock_fd is not None:
-                        try:
-                            fcntl.flock(lock_fd, fcntl.LOCK_UN)
-                        except OSError:
-                            pass
-                        os.close(lock_fd)
-
-            if removed > 0:
-                rich_print(
-                    self._log(
-                        "🧹",
-                        (
-                            "[dim]Startup janitor removed "
-                            f"{removed} stale evaluator slot namespace(s) older than "
-                            f"{int(self._evaluator_slot_stale_ttl_seconds)}s[/dim]"
-                        ),
-                    )
-                )
-        except Exception as e:
-            rich_print(self._log("⚠", f"[yellow]Evaluator slot startup janitor failed: {e}[/yellow]"))
-
-    def _acquire_evaluator_slot_namespace_lock(self) -> None:
-        """Hold a namespace-level lock for the full run to mark it as active."""
-        if not self._qubit_routing_slot_mode:
-            return
-        slot_dir = self._evaluator_slot_cleanup_dir
-        if slot_dir is None:
-            return
-        try:
-            slot_dir.mkdir(parents=True, exist_ok=True)
-            lock_path = slot_dir / ".namespace.lock"
-            fd = os.open(lock_path, os.O_RDWR | os.O_CREAT, 0o666)
-            fcntl.flock(fd, fcntl.LOCK_EX)
-            self._evaluator_slot_namespace_lock_fd = fd
-        except Exception as e:
-            rich_print(self._log("⚠", f"[yellow]Failed to acquire evaluator namespace lock: {e}[/yellow]"))
-
-    def _release_evaluator_slot_namespace_lock(self) -> None:
-        if not self._qubit_routing_slot_mode:
-            return
-        fd = self._evaluator_slot_namespace_lock_fd
-        if fd is None:
-            return
-        self._evaluator_slot_namespace_lock_fd = None
-        try:
-            fcntl.flock(fd, fcntl.LOCK_UN)
-        except OSError:
-            pass
-        try:
-            os.close(fd)
-        except OSError:
-            pass
-
     # ---------- Status ----------
 
     async def _print_status(self) -> None:
@@ -1068,7 +909,8 @@ class SimpleTESEngine(SchedulerMixin):
         try:
             await self.runtime.run(self)
         finally:
-            self._cleanup_evaluator_slot_workspace()
+            if self._qubit_routing_slot_workspace is not None:
+                self._qubit_routing_slot_workspace.cleanup()
 
     # ---------- Checkpoint loading ----------
 
@@ -1183,3 +1025,35 @@ class SimpleTESEngine(SchedulerMixin):
         else:
             # Path is already the instance dir
             return resume_path
+
+
+# ============================================================================
+# Task-local helpers
+# ============================================================================
+
+@lru_cache(maxsize=1)
+def _load_qubit_routing_slot_workspace_module():
+    """Load the qubit-routing slot workspace helper from the dataset tree."""
+    module_path = Path(__file__).resolve().parents[2] / "datasets" / "qubit_routing" / "slot_workspace.py"
+    spec = importlib.util.spec_from_file_location(
+        "simpletes_qubit_routing_slot_workspace",
+        module_path,
+    )
+    if spec is None or spec.loader is None:
+        raise ImportError(f"Could not load qubit-routing slot workspace helper: {module_path}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _is_qubit_routing_evaluator(evaluator_path: str) -> bool:
+    """Return whether *evaluator_path* belongs to the built-in qubit-routing task."""
+    qubit_routing_root = (
+        Path(__file__).resolve().parents[2] / "datasets" / "qubit_routing"
+    ).resolve()
+    configured_evaluator = Path(evaluator_path).expanduser()
+    if not configured_evaluator.is_absolute():
+        configured_evaluator = (Path.cwd() / configured_evaluator).resolve()
+    else:
+        configured_evaluator = configured_evaluator.resolve()
+    return configured_evaluator.is_relative_to(qubit_routing_root)
