@@ -1,0 +1,43 @@
+# name: cumsum
+
+files:
+  - {"name": "submission.py", "source": "@SUBMISSION@"}
+  - {"name": "task.py", "source": "task.py"}
+  - {"name": "utils.py", "source": "utils.py"}
+  - {"name": "reference.py", "source": "reference.py"}
+  - {"name": "eval.py", "source": "eval.py"}
+
+lang: "py"
+
+description: |
+  Implement a high-performance batched inclusive cumulative sum kernel.
+
+  You are given a tuple (x, output) where:
+    - x:      [bsz, n] float32 tensor on CUDA
+    - output: [bsz, n] float32 tensor on CUDA (output buffer)
+
+  Your task:
+  - Compute output = cumsum(x, dim=1) and return output
+
+config:
+  main: "eval.py"
+
+templates:
+  Python: "submission.py"
+
+test_timeout: 180
+benchmark_timeout: 180
+ranked_timeout: 420
+
+ranking_by: "geom"
+
+tests:
+  - {"bsz": 8,  "n": 4096,  "seed": 17717}
+
+benchmarks:
+  - {"bsz": 16, "n": 32000, "seed": 17717}
+  - {"bsz": 16, "n": 262208,  "seed": 677}
+  - {"bsz": 64, "n": 32000,  "seed": 324}
+  - {"bsz": 64,  "n": 262208, "seed": 23}
+  - {"bsz": 96,  "n": 201088, "seed": 46}
+  - {"bsz": 32768,  "n": 32768, "seed": 46}

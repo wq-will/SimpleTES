@@ -1,0 +1,43 @@
+# name: asymmetricmatmul
+
+files:
+  - {"name": "submission.py", "source": "@SUBMISSION@"}
+  - {"name": "task.py", "source": "task.py"}
+  - {"name": "utils.py", "source": "utils.py"}
+  - {"name": "reference.py", "source": "reference.py"}
+  - {"name": "eval.py", "source": "eval.py"}
+
+lang: "py"
+
+description: |
+  Implement a high-performance short-fat matrix multiplication kernel for the LLM serving decode phase.
+
+  You are given a tuple (a, b, c) where:
+    - a: [m, k] float32 tensor on CUDA  (m << k, small decode batch)
+    - b: [k, n] float32 tensor on CUDA
+    - c: [m, n] float32 tensor on CUDA (output buffer)
+
+  Your task:
+  - Compute c = a @ b and return c
+
+config:
+  main: "eval.py"
+
+templates:
+  Python: "submission.py"
+
+test_timeout: 180
+benchmark_timeout: 180
+ranked_timeout: 420
+
+ranking_by: "geom"
+
+tests:
+  - {"m": 16,  "k": 4096,  "n": 4096,  "seed": 17717}
+
+benchmarks:
+  - {"m": 32,  "k": 4096,  "n": 12288,  "seed": 17717}
+  - {"m": 32,  "k": 11008,  "n": 4096,  "seed": 677}
+  - {"m": 32768,  "k": 16,  "n": 32768, "seed": 324}
+  - {"m": 32768,  "k": 32, "n": 32768,  "seed": 23}
+  - {"m": 32768, "k": 64,  "n": 32768,  "seed": 46}

@@ -1,0 +1,19 @@
+servers:
+  - ip: 172.169.0.1
+    port: 8000
+  - ip: 172.169.0.48
+    port: 8000
+  - ip: 172.169.0.39
+    port: 8000
+  - ip: 172.169.1.11
+    port: 8000
+  - ip: 172.169.0.35
+    port: 8000
+  - ip: 172.169.0.36
+    port: 8000
+  - ip: 172.169.0.44
+    port: 8000
+
+# options: random
+load_balance: random
+request_timeout: 3000

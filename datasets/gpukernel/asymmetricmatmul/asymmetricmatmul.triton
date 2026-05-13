@@ -1,0 +1,125 @@
+You are an expert Triton engineer tasked with translating PyTorch code into highly optimized Triton kernel code.
+---
+1. Problem Definition
+1.1 Task Description
+You will be implementing an asymmetric matrix multiplication kernel. In this task, the computation is C = A @ B where A is [m, k] and B is [k, n], producing C of shape [m, n].
+
+Your task is to implement this operation using Triton kernel code and optimize it for end-to-end latency on GPU. The implementation should preserve the same public interface.
+
+- You may use any precision format and fully leverage the GPU hardware units for optimization, as long as output error stays below the required tolerance. (absolute tolerance: 0.01, relative tolerance: 0.01)
+
+1.2 Task Reference Implementation
+Here is a pytorch implementation. You will want to implement a kernel for the operations in the forward call:
+
+# EVOLVE-BLOCK-START
+import torch
+import triton
+import triton.language as tl
+from typing import Tuple
+
+def ref_kernel(data: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]) -> torch.Tensor:
+    a, b, c = data
+    return a @ b
+
+# EVOLVE-BLOCK-END
+
+1.3 Input/Output Specification
+| Tensor | Shape   | Dtype   | Layout                | Role          |
+|--------|---------|---------|-----------------------|---------------|
+| a      | [m, k]  | float32 | contiguous, row-major | input         |
+| b      | [k, n]  | float32 | contiguous, row-major | input         |
+| c      | [m, n]  | float32 | contiguous            | output buffer |
+
+`custom_kernel` receives `(a, b, c)`, writes the matrix product a @ b into `c`, and returns `c`.
+
+---
+
+2. Hardware Specification
+2.1 GPU Model
+NVIDIA H200 141GB
+
+2.2 Key Hardware Parameters
+| Parameter              | Value    |
+|------------------------|----------|
+| SM Count               | 132      |
+| Max Threads per Block  | 1024     |
+| Registers per SM Count | 65536    |
+| Shared Memory per SM   | 228 KB   |
+| L2 Cache Size          | 50 MB    |
+| Memory Bandwidth       | 4.8 TB/s |
+| FP32 Peak             | 67 TFLOPS    |
+| TF32 Tensor Core Peak | 989 TFLOPS   |
+| FP16 Tensor Core Peak | 1,979 TFLOPS |
+| BF16 Tensor Core Peak | 1,979 TFLOPS |
+| FP8 Tensor Core Peak  | 3,958 TFLOPS |
+
+---
+
+3. Implementation Guidelines
+3.1 Triton version
+Use Triton 3.4.0 style APIs and write kernels that are easy to autotune.
+
+3.2 General Optimization Tips
+You are operating in an iterative evolution loop, not a one-shot rewrite setting. The objective is to produce reliable descendants that improve end-to-end geomean, while preserving correctness and stability.
+
+In this setting, each candidate should be treated as a careful refinement of the strong known implementation, not a fresh redesign. The goal is to improve end-to-end geomean, so each iteration should focus on a single optimization theme (for example, launch tuning, local fusion, layout cleanup, or reducing one materialization point). This keeps the search signal clean and makes it easier to identify which change actually improved performance.
+
+The optimization priority should be practical: first improve dataflow efficiency by removing unnecessary memory movement (extra reads/writes, transient tensors, avoidable layout conversions), then optimize compute-heavy regions with context awareness. SM count reflects the scale of hardware parallelism available on the GPU. An efficient kernel should expose enough independent work to keep the machine busy, so it is important to think carefully about how the workload is mapped onto the hardware execution units. In particular, dominant contraction-like stages should be treated differently from surrounding elementwise and reduction code, and producer/consumer efficiency should usually be improved before replacing mature backend primitives.
+
+To control regressions, apply changes with a risk ladder—low-risk tuning first, medium-risk structural edits next, and high-risk rewrites only when progress stalls. Throughout the process, preserve exact semantics across all required input regimes and maintain numerically stable behavior in reduction-sensitive paths.
+
+
+3.3 A few general triton tips:
+- tl.arange only takes in constexpr arguments (static or tl.constexpr)
+- You cannot use continue in your kernel code
+- tl.dot can only take in two input tensors
+- There is no tl.mean
+- `num_stages` pipelining in `@triton.jit` to overlap global memory latency with tensor core compute
+
+---
+
+4. Testing Requirements
+The following configurations provide example problem setups used in correctness and performance testing:
+
+- {"name":"a","m":32,"k":4096,"n":12288,"seed":17717}
+- {"name":"b","m":32,"k":11008,"n":4096,"seed":677}
+- {"name":"c","m":32768,"k":16,"n":32768,"seed":324}
+- {"name":"d","m":32768,"k":32,"n":32768,"seed":23}
+- {"name":"e","m":32768,"k":64,"n":32768,"seed":46}
+
+The score is the reciprocal of the geometric mean across all benchmark settings, and a higher score indicates better performance.
+
+---
+
+5. Output Format
+
+Your response must consist of one and only one complete, self-contained Python file. Start with `# EVOLVE-BLOCK-START` and end with `# EVOLVE-BLOCK-END`.
+
+You can write custom_kernel and optimized kernel as follows:
+
+# EVOLVE-BLOCK-START
+import torch
+import triton
+import triton.language as tl
+from typing import Tuple
+
+# Your Triton kernel code here
+
+def custom_kernel(data: Tuple[torch.Tensor, torch.Tensor, torch.Tensor]) -> torch.Tensor:
+    a, b, c = data
+    # Write result into c and return c
+    # c[...] = your_triton_matmul(a, b)
+    return c
+
+# EVOLVE-BLOCK-END
+
+---
+
+Important:
+- Return one and only one complete Python file between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- Preserve `custom_kernel(data)` interface: input is `(a, b, c)`, write result into `c`, return `c`.
+- Use Triton kernels as the primary optimization method. You shouldn't use torch.compile and Torch’s computation APIs.
+- This is iterative evolution: prefer incremental improvements over full rewrites.
+- Apply one main optimization theme per iteration; keep changes attributable.
+- Maintain numerically stable behavior for reduction-sensitive computations.
+- Do not introduce persistent global cache/state.
