@@ -37,6 +37,7 @@ def run_code():
     # - cast to float64 (avoid float32 bound spillover)
     # - project to the feasible set {0<=h<=1, sum(h)=n/2}
     h_values = np.asarray(h_values, dtype=np.float64).reshape(-1)
+    assert isinstance(n_points, int), TypeError(f"n_points must be an integer, got {type(n_points)}")
     if h_values.shape[0] != n:
         raise ValueError(f"Expected h_values shape ({n},), got {h_values.shape}")
 
