@@ -247,7 +247,6 @@ class CheckpointManager:
             "eval_timeout": c.eval_timeout, "gen_concurrency": c.gen_concurrency,
             "init_eval_repeats": c.init_eval_repeats,
             "init_eval_reduce": "max",
-            "restart_every_n": c.restart_every_n,
             "log_interval": c.log_interval, "early_stop_score": c.early_stop_score,
             "output_path": c.output_path, "save_llm_io": c.save_llm_io,
             "selector": c.selector, "model": c.model,

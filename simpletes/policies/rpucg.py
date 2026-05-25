@@ -25,6 +25,26 @@ if TYPE_CHECKING:
     from simpletes.node import Node, NodeDatabaseSnapshot
 
 
+# RPUCG-specific reflection template: an SEv2-style two-line Approach/Insight
+# summary. Every other policy uses the two-paragraph REFLECTION_PROMPT_TEMPLATE
+# from simpletes.templates.reflection; rpucg overrides it via REFLECTION_TEMPLATE.
+RPUCG_REFLECTION_PROMPT_TEMPLATE = """\
+Instruction for an LLM:
+{llm_input}
+
+The LLM generated solution:
+{code}
+New solution metrics:
+{metrics}
+
+Your task is to write reflections for this solution.
+Write a **concise plain-text summary with exactly two lines**:
+Approach: <what idea the solution tried>
+Insight: <what lessons can be learned for future improvement>
+Your response can only have these two lines. The response must starts with 'Approach:'
+"""
+
+
 @register_selector("rpucg")
 class RpucgPolicy(TrajectoryPolicyBase):
     """Rank-based PUCT with Gamma decay.
@@ -33,6 +53,9 @@ class RpucgPolicy(TrajectoryPolicyBase):
     for both Q and P terms. Anti-inbreeding selection excludes 1-hop
     neighbors of already-selected parents.
     """
+
+    # rpucg uses the SEv2-style two-line reflection template.
+    REFLECTION_TEMPLATE = RPUCG_REFLECTION_PROMPT_TEMPLATE
 
     def get_info(self) -> dict[str, Any]:
         info = super().get_info()
@@ -223,10 +246,6 @@ class RpucgPolicy(TrajectoryPolicyBase):
         for parent_id in pending.inspirations:
             visit_counts[parent_id] = visit_counts.get(parent_id, 0) + 1
         self.chain_total_expansions[chain_idx] += 1
-
-    def _on_chain_reset_locked(self, chain_idx: int, kept_node_id: str | None) -> None:
-        self.chain_visit_counts[chain_idx] = {}
-        self.chain_total_expansions[chain_idx] = 0
 
     # ------------------------------------------------------------------
     # Serialization

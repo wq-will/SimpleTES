@@ -118,7 +118,6 @@ class SimpleTESEngine(SchedulerMixin):
             num_chains=config.num_chains,
             max_generations=config.max_generations,
             k=config.k_candidates,
-            restart_every_n=config.restart_every_n,
             c=config.puct_c,
             gamma=config.rpucg_gamma,
             min_inspirations_cnt=config.min_inspirations_cnt,
@@ -301,7 +300,6 @@ class SimpleTESEngine(SchedulerMixin):
             f"[dim]Workers:[/dim] gen={c.gen_concurrency} | eval={c.eval_concurrency}" +
             f" | stream_k={'ON' if c.stream_k_candidates else 'OFF'}",
             f"[dim]Init eval:[/dim] repeats={c.init_eval_repeats} | reduce=max",
-            f"[dim]Generation:[/dim] max_generations={c.max_generations} | restart_every_n={c.restart_every_n}",
             f"[dim]Timeouts:[/dim] eval={c.eval_timeout:g}s | backpressure={c.backpressure_multiplier:g}",
             f"[dim]Budget:[/dim] max_generations={c.max_generations}" +
             (f" | early_stop={c.early_stop_score:.6f}" if c.early_stop_score is not None else ""),

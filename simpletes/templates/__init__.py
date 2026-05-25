@@ -4,10 +4,7 @@ Prompt templates for SimpleTES.
 All templates are string constants with placeholders for formatting.
 """
 
-from simpletes.templates.reflection import (
-    REFLECTION_PROMPT_TEMPLATE,
-    SEV2_REFLECTION_PROMPT_TEMPLATE,
-)
+from simpletes.templates.reflection import REFLECTION_PROMPT_TEMPLATE
 from simpletes.templates.generation import (
     GENERATION_PROMPT_TEMPLATE,
     INSPIRATION_TEMPLATE,
@@ -23,7 +20,6 @@ from simpletes.templates.mcts_selection import (
 __all__ = [
     # Reflection
     "REFLECTION_PROMPT_TEMPLATE",
-    "SEV2_REFLECTION_PROMPT_TEMPLATE",
     # Generation
     "GENERATION_PROMPT_TEMPLATE",
     "INSPIRATION_TEMPLATE",

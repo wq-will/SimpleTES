@@ -242,7 +242,7 @@ def extract_instance_stats(instance_dir: str, contributor: str = "") -> Optional
         "Model": config.get("model", ""),
         "#inspir": config.get("num_inspirations", ""),
         "include-construction?": check_include_construction(instance_dir, config),
-        "Policy": config.get("inspiration_policy", ""),
+        "Policy": config.get("selector", config.get("inspiration_policy", "")),
         "N_chains": policy_state.get("num_chains", config.get("num_chains", "")),
         "K_candidates": policy_state.get("k", config.get("k_candidates", "")),
         "Total Nodes": config.get("max_generations", ""),

@@ -137,11 +137,6 @@ class PuctPolicy(TrajectoryPolicyBase):
 
         self.chain_total_expansions[chain_idx] += 1
 
-    def _on_chain_reset_locked(self, chain_idx: int, kept_node_id: str | None) -> None:
-        self.chain_visit_counts[chain_idx] = {}
-        self.chain_max_child_reward[chain_idx] = {}
-        self.chain_total_expansions[chain_idx] = 0
-
     def _state_dict_extra(self) -> dict[str, Any]:
         return {
             "c": self.c,

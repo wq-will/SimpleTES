@@ -6,7 +6,8 @@ evaluation work through queues, invokes policy callbacks on batch
 completion, and persists intermediate state.
 
 Submodules:
-- ``core``       — SimpleTESEngine (the scheduler)
+- ``core``       — SimpleTESEngine
+- ``scheduler``  — SchedulerMixin (Algorithm 2's scheduling loop, mixed into SimpleTESEngine)
 - ``runtime``    — RuntimeBase + LocalRuntime (in-process worker pools)
 - ``checkpoint`` — CheckpointManager (save / resume)
 """

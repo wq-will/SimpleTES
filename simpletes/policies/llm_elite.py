@@ -323,9 +323,6 @@ class LLMElitePolicy(TrajectoryPolicyBase):
             "llm_output": llm_output,
         })
 
-    def _on_chain_reset_locked(self, chain_idx: int, kept_node_id: str | None) -> None:
-        self.elite_sets[chain_idx] = []
-
     def _select_from_chain(self, chain_idx: int, chain_nodes: list[Node], n: int) -> list[Node]:
         elite_list = self.elite_sets[chain_idx]
 
