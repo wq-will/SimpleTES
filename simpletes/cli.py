@@ -158,15 +158,6 @@ def build_parser(*, mode: str = "single") -> argparse.ArgumentParser:
         help="Print first N lines of generator prompt for debugging (default: 0 = disabled)",
     )
     parser.add_argument(
-        "--restart-every-n",
-        type=int,
-        default=EngineConfig.restart_every_n,
-        help=(
-            "(chain policies) Reset a chain to its best node after every N kept nodes "
-            f"(default: {EngineConfig.restart_every_n})"
-        ),
-    )
-    parser.add_argument(
         "--stream-k-candidates",
         action="store_true",
         help="Dispatch k candidates as independent generation jobs (k=1 per job) while preserving local-best batch semantics",
@@ -231,7 +222,11 @@ def build_parser(*, mode: str = "single") -> argparse.ArgumentParser:
         "--backpressure-multiplier",
         type=float,
         default=EngineConfig.backpressure_multiplier,
-        help=f"Multiplier for backpressure threshold (default: {EngineConfig.backpressure_multiplier:g})",
+        help=(
+            "Per-chain in-flight batch cap (a chain is selectable only when its "
+            "pending batch count is <= this value; 0 = strictly one batch per "
+            f"chain at a time). Default: {EngineConfig.backpressure_multiplier:g}"
+        ),
     )
 
     # Checkpoints
@@ -431,28 +426,5 @@ def _validate_policy(args, policies, *, show_hint: bool) -> None:
 
 
 def _validate_chain_policy_args(args, parser: argparse.ArgumentParser) -> None:
-    if args.selector not in {"balance", "puct", "rpucg", "llm_puct", "llm_rpucg", "llm_elite"}:
-        return
-
-    restart_every_n = getattr(args, "restart_every_n", EngineConfig.restart_every_n)
-    if restart_every_n <= 0:
-        parser.error("--restart-every-n must be > 0")
-
-    num_chains = max(1, getattr(args, "num_chains", EngineConfig.num_chains))
-    max_generations = max(0, getattr(args, "max_generations", EngineConfig.max_generations))
-    k_candidates = max(1, getattr(args, "k_candidates", EngineConfig.k_candidates))
-
-    base = max_generations // num_chains
-    remainder = max_generations % num_chains
-    invalid = {}
-    for chain_idx in range(num_chains):
-        chain_budget = base + (1 if chain_idx < remainder else 0)
-        prompt_budget = (chain_budget + k_candidates - 1) // k_candidates if chain_budget > 0 else 0
-        if prompt_budget > 0 and prompt_budget % restart_every_n != 0:
-            invalid[chain_idx] = prompt_budget
-
-    if invalid:
-        parser.error(
-            "--restart-every-n must divide each non-zero per-chain prompt budget; "
-            f"got restart_every_n={restart_every_n}, prompt_budget={invalid}"
-        )
+    """Reserved hook for chain-policy argument validation. Currently a no-op."""
+    return

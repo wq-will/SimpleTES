@@ -231,23 +231,6 @@ def _auto_read(path: Path) -> str:
     return ""
 
 
-def _compute_safe_restart_every_n(max_generations: int, num_chains: int, k_candidates: int) -> int:
-    """Pick a restart_every_n that divides every non-zero per-chain prompt budget.
-
-    cli._validate_chain_policy_args requires prompt_budget % restart_every_n == 0
-    for each chain. Returning the minimum non-zero prompt_budget always
-    satisfies that and leaves restart effectively a no-op for short runs.
-    """
-    from simpletes.policies.base import compute_chain_budgets
-
-    budgets = [
-        (chain_budget + k_candidates - 1) // k_candidates
-        for chain_budget in compute_chain_budgets(max_generations, num_chains).values()
-        if chain_budget > 0
-    ]
-    return min(budgets) if budgets else 1
-
-
 # ==================== Command construction ====================
 
 def _resolve_task_paths(cfg: Dict[str, Any], tasks: List[Task]) -> Task:
@@ -272,18 +255,6 @@ def build_command(cfg: Dict[str, Any], task: Task, extra: List[str]) -> List[str
         if key in cfg:
             args += [f"--{key.replace('_', '-')}", str(cfg[key])]
 
-    # Auto-compute restart_every_n to satisfy the engine's divisibility check
-    # unless the user pinned one via advanced prompts or profile.
-    if "restart_every_n" in cfg:
-        args += ["--restart-every-n", str(cfg["restart_every_n"])]
-    else:
-        safe = _compute_safe_restart_every_n(
-            cfg["max_generations"],
-            cfg.get("num_chains", 4),
-            cfg.get("k_candidates", 4),
-        )
-        args += ["--restart-every-n", str(safe)]
-
     # Only pass --output-path if the profile or wizard set one; otherwise let
     # EngineConfig.output_path ("checkpoints") apply.
     if cfg.get("output_path"):
@@ -304,7 +275,7 @@ def show_review(cfg: Dict[str, Any], task: Task, cmd: List[str]) -> None:
     tbl.add_column()
     for key in ("task", "model", "api_base", "max_generations", "selector",
                 "num_chains", "k_candidates", "eval_concurrency", "gen_concurrency",
-                "temperature", "restart_every_n"):
+                "temperature"):
         if cfg.get(key) not in (None, ""):
             tbl.add_row(key, str(cfg[key]))
     if cfg.get("api_key"):

@@ -4,7 +4,7 @@ import numpy as np
 def construct_h():
     # Random construction matching ttt_discover's create_initial_state logic
     rng = np.random.default_rng()
-    n_points = rng.integers(40, 100)
+    n_points = int(rng.integers(40, 100))
 
     # Start with uniform 0.5
     h_values = np.ones(n_points) * 0.5

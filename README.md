@@ -1,362 +1,237 @@
-<p align="center">  
-<img src="picture/affiliations.png" alt="WILL" height="66">
+<p align="center">
+  <img src="assets/affiliations.png" alt="WILL" height="72">
 </p>
 
----
-
-<div align="center">
-
-[![Website](https://img.shields.io/badge/Website-SimpleTES-blue)](https://www.wizardquant.com/will/simpletes)
-[![Paper](https://img.shields.io/badge/Paper-arXiv-b31b1b)](https://arxiv.org/abs/2604.19341)
-
-</div>
-
-
-
-Reference implementation behind the paper *Evaluation-driven Scaling for Scientific Discovery*.
-
-SimpleTES is a training-free search system for open-ended problems where "reason longer" is not enough. It spends test-time compute on the loop that actually drives discovery: **propose -> evaluate -> refine**.
-
+<h1 align="center">SimpleTES</h1>
 
 <p align="center">
-  <img src="picture/simpletes-overview.png" alt="SimpleTES overview" width="880">
+  <b>Test-time compute, spent where it actually matters.</b>
 </p>
 
-## Why This Repo Exists
+<!-- A1: project meta badges -->
+<p align="center">
+  <a href="https://www.wizardquant.com/will/simpletes"><img src="https://img.shields.io/badge/Website-SimpleTES-2E86C1?logo=googlechrome&logoColor=white" alt="Website"></a>
+  <a href="https://arxiv.org/abs/2604.19341"><img src="https://img.shields.io/badge/Paper-arXiv-b31b1b?logo=arxiv&logoColor=white" alt="Paper"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-AGPL%203.0-orange.svg" alt="License: AGPL v3"></a>
+  <a href="https://github.com/wq-will/SimpleTES/stargazers"><img src="https://img.shields.io/github/stars/wq-will/SimpleTES?style=flat&logo=github&label=Stars" alt="Stars"></a>
+  <a href="https://github.com/wq-will/SimpleTES/issues"><img src="https://img.shields.io/github/issues/wq-will/SimpleTES?logo=github" alt="Issues"></a>
+</p>
 
-Most test-time scaling work spends extra compute on generation: more tokens, more samples, more turns. SimpleTES asks a different question:
+<!-- Hero diagram -->
+<p align="center">
+  <img src="assets/simpletes-overview.png" alt="SimpleTES test-time scaling overview" width="900">
+</p>
 
-> If progress depends on an external evaluator, how should we scale the evaluation-driven loop itself?
+**SimpleTES** (Simple Test-time Evaluation-driven Scaling) scales the propose → evaluate → refine loop for scientific discovery. It combines parallel exploration, feedback-driven refinement, and local selection. Open-source `gpt-oss` models reach state-of-the-art on 21 problems across six domains, beating both frontier models and tuned optimization pipelines.
 
-That framing matters for problems where the model cannot honestly know the answer without trying something in the world of the task: running code, checking a verifier, timing a kernel, compiling a circuit, fitting a law, or scoring a construction.
+## Updates
 
-At a high level, SimpleTES allocates a fixed evaluator budget `N` across four levers:
+- **2026-04** — Released the [SimpleTES technical report on arXiv](https://arxiv.org/abs/2604.19341) and the public codebase.
 
-| Lever | Meaning | Why it matters | Main CLI knob |
-| --- | --- | --- | --- |
-| `C` | Parallel exploration | Try genuinely different directions | `--num-chains` |
-| `L` | Feedback-driven refinement depth | Let evaluator feedback compound | implied by total budget |
-| `K` | Local best-of-`K` selection | Avoid committing weak candidates | `--k-candidates` |
-| `Phi` | History-to-prompt policy | Decide what past evidence shapes the next attempt | `--selector` |
+## Highlight Results
 
-In rough terms, `N ~= C x L x K`.
+| Domain | Highlights | Artifacts |
+|--------|------------|-----------|
+| Quantum circuit compilation | Routing policies beating strong handcrafted baselines on SABRE / QASMBench | [`best_results/quantum_circuit_compilation/`](best_results/quantum_circuit_compilation) |
+| GPU kernel optimization | TriMul, batched cumsum, asymmetric matmul kernels | [`best_results/gpu_kernel_optimization/`](best_results/gpu_kernel_optimization) |
+| Algorithm engineering | LASSO path solver out-performing expert baselines (2× speedup) | [`best_results/algorithm_engineering/`](best_results/algorithm_engineering) |
+| Mathematics — extremal analysis | New Erdős min-overlap & autocorrelation constructions | [`best_results/mathematics_extremal_analysis/`](best_results/mathematics_extremal_analysis) |
+| Combinatorial construction | SOTA sum-difference, circle packing, Hadamard determinant | [`best_results/combinatorial_construction/`](best_results/combinatorial_construction) |
+| Data science | Better scaling laws & single-cell RNA denoising | [`best_results/data_science/`](best_results/data_science) |
 
-The paper studies 21 featured problems across six domains and shows that this simple loop can discover state-of-the-art solutions with open-source `gpt-oss` models. This repository focuses on the **runtime system, task interface, benchmark assets, and released best artifacts** behind that work.
+- Full inventory of all 21 released artifacts: [`best_results/README.md`](best_results/README.md).
+- **Case studies** — what each task's seed program evolved into, with side-by-side animations: [`assets/case_study/README.md`](assets/case_study/README.md).
 
-## If You Are Skimming
+## How It Works
 
-1. Use [`main_wizard.py`](main_wizard.py) if you want the fastest path to a first run.
-2. Use [`main.py`](main.py) if you want scripted or cluster-friendly execution.
-3. Read [`best_results/README.md`](best_results/README.md) if you want to inspect what the paper actually discovered.
-4. Look at [`datasets/`](datasets) if you want to understand how tasks are packaged.
-5. Read the "Bring Your Own Task" section below if you want to plug in your own evaluator.
+A fixed evaluator budget is spent across four levers:
 
-## What You Get In This Repository
+| Lever | Knob | Controls |
+|:-----:|------|----------|
+| **`C`** | `--num-chains` | Parallel exploration — try genuinely different directions |
+| **`L`** | implied by total budget | Feedback-driven refinement depth per chain |
+| **`K`** | `--k-candidates` | Local best-of-`K` — avoid committing weak candidates |
+| **`Φ`** | `--selector` | History-to-prompt policy — what past evidence shapes the next attempt |
 
-| Path | What it is | Why you care |
-| --- | --- | --- |
-| [`simpletes/`](simpletes) | Core engine, scheduler, policies, LLM backends, prompt templates | The actual search system |
-| [`main.py`](main.py) | Primary CLI entry point | Best for reproducible runs and scripts |
-| [`main_wizard.py`](main_wizard.py) | Interactive launcher | Best for exploring tasks and configs locally |
-| [`datasets/`](datasets) | Built-in task families, evaluators, seeds, task assets | Where you run SimpleTES |
-| [`best_results/`](best_results) | Highest-scoring released artifacts from the paper | Where you inspect final discoveries |
-| [`scripts/`](scripts) | Task prep, plotting, stats extraction, registry helpers | Operational tooling around runs |
-| [`tests/`](tests) | Regression tests | Sanity checks for the runtime |
+Each trajectory keeps a history of `(candidate, score, metadata)`. One step: select history, build prompt, ask for `K` candidates, evaluate in isolated subprocesses, commit the best.
 
-Two important distinctions:
+**Available selectors** (`uv run python main.py --list-policies`):
 
-- [`datasets/`](datasets) is the **runnable benchmark tree**.
-- [`best_results/`](best_results) is the **released artifact tree** for the paper's top results.
-
-They are related, but they are not the same directory and do not serve the same purpose.
+| Selector | Style | Best for |
+|----------|-------|----------|
+| `balance` *(default)* | Stratified sampling | Robust default; low-config exploration |
+| `puct` | PUCT scoring | Tree-search flavored selection |
+| `rpucg` | DAG-aware, γ-decay | Paper-style; strongest single selector |
+| `llm_elite` | Bounded elite pool | LLM-managed per-chain population |
+| `llm_puct` / `llm_rpucg` | Hybrid prefilter + LLM | Best for noisy chains / rich DAG histories |
 
 ## Quickstart
 
-### 1. Install
-
-SimpleTES requires **Python >= 3.11**.
-
-`uv` is the recommended workflow:
+Python ≥ 3.11. Install with `uv`:
 
 ```bash
 uv sync
-uv sync --extra vllm   # optional: vLLM token-forcing backend
+uv sync --extra vllm        # optional: vLLM token-forcing backend
 ```
 
-If you prefer `pip`:
+Or `pip install -e .`.
+
+Set credentials for any [LiteLLM-supported](https://docs.litellm.ai/docs/providers) provider:
 
 ```bash
-pip install -e .
+export GEMINI_API_KEY=...      # or OPENAI_API_KEY / ANTHROPIC_API_KEY / ...
 ```
 
-SimpleTES uses LiteLLM by default, so any LiteLLM-supported provider can work. Set the matching credential in your environment, for example:
-
-```bash
-export GEMINI_API_KEY=...
-# or OPENAI_API_KEY / ANTHROPIC_API_KEY / ...
-```
-
-### 2. Fastest First Run
-
-The easiest way to get oriented is the interactive launcher:
+Interactive launcher (discovers tasks, prompts for model / budget / selector, prints or runs the command):
 
 ```bash
 uv run python main_wizard.py
 ```
 
-Useful wizard options:
-
-- `--dry-run`: print the resolved `main.py` command without executing it
-- `--save-profile <name>`: save the chosen configuration
-- `--load-profile <name>`: replay a saved configuration
-- `--list-profiles`: inspect saved launcher profiles
-
-### 3. Direct CLI Example
-
-This runs a small circle-packing search directly through `main.py`:
+Direct CLI:
 
 ```bash
 uv run python main.py \
-  --init-program datasets/circle_packing/circle_packing_20/init_program.py \
-  --evaluator datasets/circle_packing/circle_packing_20/evaluator.py \
-  --instruction datasets/circle_packing/circle_packing_20/circle_packing_20.txt \
-  --model gemini/gemini-2.0-flash \
-  --max-generations 50 \
-  --selector rpucg
+  --init-program  datasets/circle_packing/circle_packing_26/init_program.py \
+  --evaluator     datasets/circle_packing/circle_packing_26/evaluator.py \
+  --instruction   datasets/circle_packing/circle_packing_26/circle_packing_26.txt \
+  --model         gemini/gemini-2.0-flash \
+  --selector      rpucg \
+  --max-generations 50
 ```
 
-Notes:
-
-- `--selector rpucg` is a paper-style policy choice. The repository default is more conservative: `balance`.
-- You can swap `--model` for any LiteLLM-supported model string.
-- Checkpoints are written under `checkpoints/<date>/instance-<id>/`.
-
-To resume a run:
+Resume from an instance directory:
 
 ```bash
 uv run python main.py --resume checkpoints/<date>/instance-<id>
 ```
 
-## A 30-Second Mental Model
+All flags: `uv run python main.py --help`.
 
-Each trajectory in SimpleTES keeps a history of evaluated nodes:
+## Configuration
 
-- candidate solution
-- scalar reward / score
-- task-specific evaluator metadata
+<details>
+<summary><b>📋 Most-tuned flags</b> — click to expand</summary>
 
-At every step, the system:
+| Goal | Flag |
+|------|------|
+| Total search budget | `--max-generations` |
+| More directions | `--num-chains` |
+| Less myopic local picks | `--k-candidates` |
+| Change history-to-prompt strategy | `--selector` |
+| Per-chain in-flight cap (concurrency) | `--backpressure-multiplier` |
+| Split throughput knobs | `--gen-concurrency`, `--eval-concurrency` |
+| Early stop when score reached | `--early-stop-score` |
+| Inspirations per prompt (or a sampled range) | `--num-inspirations` / `--min-inspirations-cnt` / `--max-inspirations-cnt` |
+| Switch LLM backend | `--llm-backend litellm` (default) or `--llm-backend vllm_token_forcing` |
+| Use a task-local Python env | `--eval-venv <path>` (auto-detected for `datasets/<family>/venv/`) |
+| Skip the 1-token LLM ping at startup | `--skip-preflight` |
 
-1. selects useful history from the trajectory,
-2. builds the next prompt,
-3. asks the model for one or more candidates,
-4. evaluates them in isolated subprocesses,
-5. commits the best one,
-6. repeats until the evaluator budget is exhausted.
+</details>
 
-The runtime is asynchronous, so generation and evaluation can proceed concurrently with backpressure and checkpointing.
+<details>
+<summary><b>🎚️ Selector-specific flags</b> — click to expand</summary>
 
-## Common Workflows
+| Selector | Flag |
+|----------|------|
+| `balance` | `--exploitation-ratio` / `--exploration-ratio` / `--elite-ratio` |
+| `puct` | `--puct-c` |
+| `rpucg` | `--rpucg-gamma` |
+| `llm_elite` / `llm_puct` / `llm_rpucg` | `--llm-policy-model` / `--llm-policy-api-base` / `--llm-policy-api-key` / `--llm-policy-pool-size` |
 
-### Browse what policies exist
+</details>
 
-```bash
-uv run python main.py --list-policies
-```
+<details>
+<summary><b>💾 Checkpoint & resume</b> — click to expand</summary>
 
-### Check which tasks need setup
-
-```bash
-uv run python scripts/prepare_task.py --list
-uv run python scripts/prepare_task.py --check
-```
-
-### Prepare a data-heavy family
-
-```bash
-uv run python scripts/prepare_task.py --task scaling_law
-```
-
-### Run tests
+Checkpoints land under `--output-path` (default `checkpoints/`) every `--log-interval` evaluations. Each run gets a `<date>/instance-<id>/` directory. Resume with `--resume` pointed at that instance directory:
 
 ```bash
-uv run pytest
+uv run python main.py --resume checkpoints/<date>/instance-<id>
 ```
 
-### Override the evaluator environment
+`--save-llm-io` keeps full LLM input/output (large files). `--gzip` compresses checkpoint nodes.
 
-If a task family has its own virtual environment, SimpleTES will auto-detect `<task_family>/venv` when present. You can also pin one explicitly:
+</details>
 
-```bash
-uv run python main.py ... --eval-venv path/to/venv
-```
+## Build Your Own Task
 
-## Which Tasks Are Easy To Try First
-
-For a first local run, start with self-contained families such as:
-
-- `circle_packing`
-- `autocorrelation`
-- `erdos`
-- `sums_diffs`
-
-Families that usually need extra setup or external infrastructure include:
-
-- `ahc` for AtCoder Heuristic Contest tasks
-- `numerical_tasks`
-- `open_problems_bio`
-- `scaling_law`
-- `znaa`
-
-Other practical constraints:
-
-- `ahc` evaluators use Docker.
-- GPU-kernel tasks under [`datasets/gpumode/`](datasets/gpumode) and [`datasets/kernelbench/`](datasets/kernelbench) need suitable accelerator/runtime stacks.
-- Different task families may rely on family-local assets, datasets, or environments.
-
-## Benchmarks And Released Results
-
-The repository contains two complementary views of the project:
-
-- a **standard runnable task tree** under [`datasets/`](datasets)
-- a **paper-featured artifact tree** under [`best_results/`](best_results)
-
-The standard task tree currently exposes **35 launcher-discoverable subtasks across 11 families**, and the paper-featured artifact tree contains **21 released best-result packages across six domains**.
-
-### Domain Coverage
-
-| Domain | Runnable families / assets | Released best artifacts |
-| --- | --- | --- |
-| Quantum circuit compilation | [`datasets/qubit_routing/`](datasets/qubit_routing), [`datasets/znaa/`](datasets/znaa) | [`best_results/quantum_circuit_compilation/`](best_results/quantum_circuit_compilation) |
-| GPU kernel optimization | [`datasets/gpumode/`](datasets/gpumode), [`datasets/kernelbench/`](datasets/kernelbench) | [`best_results/gpu_kernel_optimization/`](best_results/gpu_kernel_optimization) |
-| Algorithm engineering | [`datasets/ahc/`](datasets/ahc), [`datasets/numerical_tasks/`](datasets/numerical_tasks) | [`best_results/algorithm_engineering/`](best_results/algorithm_engineering) |
-| Mathematics extremal analysis | [`datasets/erdos/`](datasets/erdos), [`datasets/autocorrelation/`](datasets/autocorrelation) | [`best_results/mathematics_extremal_analysis/`](best_results/mathematics_extremal_analysis) |
-| Combinatorial construction | [`datasets/circle_packing/`](datasets/circle_packing), [`datasets/sums_diffs/`](datasets/sums_diffs), [`datasets/hadamard_maximal_det/`](datasets/hadamard_maximal_det) | [`best_results/combinatorial_construction/`](best_results/combinatorial_construction) |
-| Data science | [`datasets/scaling_law/`](datasets/scaling_law), [`datasets/open_problems_bio/`](datasets/open_problems_bio) | [`best_results/data_science/`](best_results/data_science) |
-
-### Representative Discoveries From The Paper
-
-SimpleTES is designed to be domain-general, not a one-off scaffold for a single benchmark. The released artifacts span:
-
-- quantum routing and compilation policies that beat strong handcrafted baselines,
-- GPU kernels for TriMul, batched cumsum, and asymmetric matrix multiplication,
-- a LASSO path solver that outperforms expert baselines,
-- new constructions for Erdos minimum overlap and autocorrelation inequalities,
-- SOTA results on sum-difference, circle packing, and Hadamard determinant tasks,
-- better scaling laws and a stronger single-cell RNA denoising pipeline.
-
-If you want to inspect the exact paper artifacts, start with [`best_results/README.md`](best_results/README.md).
-
-## How The Search Budget Maps To Flags
-
-If you want to tune the system without reading the entire codebase, these are the knobs that matter most:
-
-| Goal | Main flags | Practical interpretation |
-| --- | --- | --- |
-| Increase total search budget | `--max-generations` | More evaluator calls overall |
-| Explore more directions | `--num-chains` | More independent trajectories |
-| Make each step less myopic | `--k-candidates` | Evaluate several local candidates before committing |
-| Change how history is used | `--selector` | Swap prompt-construction / selection policy |
-| Match runtime to infra | `--gen-concurrency`, `--eval-concurrency` | Separate model throughput from evaluator throughput |
-
-Selector notes:
-
-- `balance`: repository default, simple and robust
-- `puct`: tree-search flavored selection
-- `rpucg`: stronger paper-style selector with DAG-aware value propagation
-- `llm_puct`, `llm_rpucg`, `llm_elite`: selectors that add an LLM-guided policy layer
-
-For the full surface area, run:
-
-```bash
-uv run python main.py --help
-```
-
-## Bring Your Own Task
-
-The minimal SimpleTES task contract is intentionally small. A standard task directory looks like:
+SimpleTES ships with 13 task families across 6 domains. A new task is three files:
 
 ```text
 my_family/
   my_task/
-    init_program.py
-    evaluator.py
-    my_task.txt
+    init_program.{py|cpp|rs|...}      # seed; mark the evolved region with EVOLVE-BLOCK
+    evaluator.py                      # def evaluate(filepath) -> {"combined_score": ..., ...}
+    my_task.txt                       # instruction shown to the model
 ```
 
-What each file does:
+Drop the directory under `datasets/` and `main_wizard.py` picks it up.
 
-- `init_program.py`: the seed solution or baseline the search starts from
-- `evaluator.py`: scores a candidate and returns at least `{"combined_score": float, ...}`
-- `my_task.txt`: the instruction shown to the model
+→ Catalogue + design guide: [`datasets/README.md`](datasets/README.md).
 
-SimpleTES is not limited to Python-only outputs. Built-in tasks also evolve:
+## Contributing
 
-- C++ programs
-- Rust programs
-- mathematical constructions stored as JSON artifacts
+Contributions are welcome.
 
-The most important evaluator contract is:
+- **New tasks**: follow [`datasets/README.md`](datasets/README.md#how-to-design-your-own-task) and open a PR.
+- **Code**: fork, add tests under [`tests/`](tests), run `uv run pytest`, open a PR with a benchmark comparison.
+- **Bugs / features**: [GitHub Issues](https://github.com/wq-will/SimpleTES/issues).
 
-```python
-def evaluate(candidate_path: str) -> dict:
-    return {
-        "combined_score": 0.0,
-        # any additional task-specific metadata
-    }
-```
-
-Practical tips:
-
-- If your task needs extra Python packages, ship a family-local environment and/or lockfile.
-- If your task needs large assets, declare them with a `data_manifest.json` and use [`scripts/prepare_task.py`](scripts/prepare_task.py).
-- If you want the interactive launcher to discover the task automatically, follow the standard `init_program + evaluator + *.txt` layout.
-
-## Repository Tour
-
-```text
-main.py                  primary CLI for scripted runs
-main_wizard.py           interactive launcher
-simpletes/               engine, policies, scheduler, LLM adapters, templates
-datasets/                runnable task families and supporting assets
-best_results/            released top artifacts from the paper
-scripts/                 setup, plotting, extraction, registry helpers
-tests/                   regression tests
-picture/                 README and branding images
-```
+<p align="center">
+  [<a href="https://github.com/wq-will/SimpleTES/issues/new?labels=bug">Report a Bug</a>]
+  | [<a href="https://github.com/wq-will/SimpleTES/issues/new?labels=enhancement">Suggest a Feature</a>]
+  | [<a href="https://github.com/wq-will/SimpleTES/pulls">Open a PR</a>]
+  | [<a href="datasets/README.md#how-to-design-your-own-task">Add a Task</a>]
+</p>
 
 ## Troubleshooting
 
-- `LLM preflight failed`: check your provider credentials, model string, or API base. Use `--skip-preflight` only if you know your backend is still starting.
-- `No checkpoints found` on resume: pass the instance directory itself, not its parent directory.
-- A task complains about missing files: run `uv run python scripts/prepare_task.py --list` and prepare the relevant family.
-- Evaluations fail because of missing packages: provide or point to the correct task-local environment with `--eval-venv`.
-- You are hitting rate limits: lower `--gen-concurrency`, raise `--retry`, or move to a lower-latency model.
-- Evaluations time out: raise `--eval-timeout` for slow compilers, simulators, or long-running tasks.
+<details>
+<summary>The most common issues and how to resolve them are listed below.</summary>
 
-## Scope Note
+| Symptom | Action |
+|---------|--------|
+| **`LLM preflight failed`** | Check provider credentials, model string, and API base. Use `--skip-preflight` to bypass while the backend is still warming up. |
+| **`No checkpoints found` on resume** | Pass the **instance** directory (e.g. `checkpoints/2026-05-24/instance-0`), not its parent date directory. |
+| **Task complains about missing files** | `uv run python scripts/prepare_task.py --list` to see what's available, then `--task <family>` to fetch / build. |
+| **Evaluations error on imports** | Pin the task-local venv with `--eval-venv <path>`; SimpleTES auto-detects `datasets/<family>/venv/` when present. |
+| **Hitting rate limits** | Lower `--gen-concurrency`, raise `--retry`, or switch to a lower-latency model. |
+| **Evaluations time out** | Raise `--eval-timeout` for slow compilers / simulators. The task-level default lives in each evaluator as `TIMEOUT_SECONDS` and can be overridden per-evaluation via `EVALUATOR_TIMEOUT_SECONDS`. |
+| **GPU-kernel tasks (`gpumode`, `kernelbench`) hang** | Make sure the compiler server is running first — see the family `README.md` for the launch command. |
+| **`fcntl` import error** (Windows) | The registry script `scripts/evolve_db_registry.py` is POSIX-only by design. Other tasks run fine on Windows. |
 
-The accompanying paper also studies learning from successful discovery trajectories. This repository is centered on the **search/runtime side** of SimpleTES: generation, evaluation, scheduling, selectors, task packaging, and released result artifacts.
+</details>
 
 ## Community
 
 Join the SimpleTES community to discuss usage, share research progress, and send feedback. Scan the QR code below to join the chat group:
 
 <p align="center">
-  <img src="picture/chat.jpg" alt="SimpleTES community chat" width="280">
+  <img src="assets/chat.jpg" alt="SimpleTES community chat" width="280">
 </p>
+
+## Citation
+
+```bibtex
+@article{simpletes2026,
+  title   = {Evaluation-driven Scaling for Scientific Discovery},
+  author  = {WILL Team},
+  journal = {arXiv preprint arXiv:2604.19341},
+  year    = {2026},
+  url     = {https://arxiv.org/abs/2604.19341}
+}
+```
 
 ## License
 
-SimpleTES is released under [GNU AGPL-3.0-or-later](LICENSE), Copyright (C) 2026 WILL.
+Released under [GNU AGPL-3.0-or-later](LICENSE), © 2026 WILL.
 
-Practical summary:
-
-- Research and local use are allowed.
-- If you modify the framework and distribute it, the derivative framework remains AGPL.
-- If you expose a modified version as a network service, you must provide source under AGPL terms.
-- Programs discovered by SimpleTES are not themselves automatically bound by AGPL just because SimpleTES found them.
+- Research and local use — allowed.
+- Programs *discovered* by SimpleTES — not automatically AGPL just because SimpleTES found them.
+- Modifying the framework and **distributing** it — the derivative framework stays AGPL.
+- Exposing a modified version as a **network service** — you must provide source under AGPL terms.
 
 <p align="center">
-  <img src="picture/will-symbol-c.png" alt="WILL" height="55">
+  <img src="assets/will-symbol-c.png" alt="WILL" height="55">
 </p>

@@ -54,11 +54,11 @@ class PendingFinalize:
 
 
 def register_selector(name: str):
-    """Decorator to register an inspiration policy.
-    
+    """Decorator to register a selector.
+
     Usage:
-        @register_selector("my_policy")
-        class MyPolicy(Selector):
+        @register_selector("my_selector")
+        class MySelector(Selector):
             ...
     """
     def decorator(cls: type[Selector]) -> type[Selector]:
@@ -185,12 +185,16 @@ class TrajectoryPolicyBase(Selector):
 
     _BACKPRESSURE_MULTIPLIER = 1000.0
 
+    # Reflection prompt template used by reflect_on_winner. Subclasses may
+    # override this with a policy-specific template (e.g. rpucg uses a
+    # two-line SEv2-style template).
+    REFLECTION_TEMPLATE = REFLECTION_PROMPT_TEMPLATE
+
     def get_info(self) -> dict[str, Any]:
         """Return chain-policy common parameters."""
         info = {
             "num_chains": self.num_chains,
             "k_candidates": self.k,
-            "restart_every_n": self.restart_every_n,
         }
         if self.reflection_mode and self.llm_policy_model:
             info["llm_policy_model"] = self.llm_policy_model
@@ -201,7 +205,6 @@ class TrajectoryPolicyBase(Selector):
         num_chains: int = 4,
         max_generations: int = 100,
         k: int = 1,
-        restart_every_n: int = 25,
         min_inspirations_cnt: int | None = None,
         max_inspirations_cnt: int | None = None,
         # Reflection & LLM policy config (unified)
@@ -217,10 +220,6 @@ class TrajectoryPolicyBase(Selector):
         self.num_chains = max(1, int(num_chains))
         self.max_generations = max_generations
         self.k = max(1, int(k))
-        # Chain-local restart period R from Alg.~\ref{alg:async_method}:
-        # after every R commits to this chain's history, _reset_chain_locked
-        # truncates the chain to its local best and clears DAG + visit counts.
-        self.restart_every_n = int(restart_every_n)
         self.min_inspirations_cnt = min_inspirations_cnt
         self.max_inspirations_cnt = max_inspirations_cnt
 
@@ -236,7 +235,6 @@ class TrajectoryPolicyBase(Selector):
             i: (budget + self.k - 1) // self.k if budget > 0 else 0
             for i, budget in self.chain_gen_budget.items()
         }
-        self._validate_restart_every_n()
 
         # Chain state
         self.chains: dict[int, list[str]] = {i: [] for i in range(self.num_chains)}
@@ -262,44 +260,12 @@ class TrajectoryPolicyBase(Selector):
         self._chain_error_counts: dict[int, dict[str, int]] = {i: {} for i in range(self.num_chains)}
         self._chain_total_counts: dict[int, int] = {i: 1 for i in range(self.num_chains)}
 
-        # Restart counter per chain (consumed by restart_every_n logic)
-        self.nodes_since_restart: dict[int, int] = {i: 0 for i in range(self.num_chains)}
-
-    def _validate_restart_every_n(self) -> None:
-        if self.restart_every_n <= 0:
-            raise ValueError("restart_every_n must be > 0")
-
     def _insert_sorted(self, chain_idx: int, node_id: str, score: float | None) -> None:
         if score is None:
             raise ValueError("chain insert requires finite score")
         entry = (-float(score), node_id)
         chain = self._chain_sorted[chain_idx]
         bisect.insort(chain, entry)
-
-    def _on_chain_reset_locked(self, chain_idx: int, kept_node_id: str | None) -> None:
-        """Subclass hook for clearing chain-local state on restart."""
-        pass
-
-    def _reset_chain_locked(self, chain_idx: int) -> str | None:
-        """Chain-local restart from Alg.~\\ref{alg:async_method}: truncate chain
-        to its best entry, clear its DAG + visit counts. Triggered every
-        ``restart_every_n`` commits; see ``__init__`` for the period semantics."""
-        kept_entry = self._chain_sorted.get(chain_idx, [])
-        best_entry = kept_entry[0] if kept_entry else None
-        kept_node_id = best_entry[1] if best_entry is not None else None
-
-        if kept_node_id is None:
-            self.chains[chain_idx] = []
-            self._chain_sorted[chain_idx] = []
-        else:
-            self.chains[chain_idx] = [kept_node_id]
-            self._chain_sorted[chain_idx] = [best_entry]
-
-        self.nodes_since_restart[chain_idx] = 0
-        self._chain_error_counts[chain_idx] = {}
-        self._chain_total_counts[chain_idx] = 1
-        self._on_chain_reset_locked(chain_idx, kept_node_id)
-        return kept_node_id
 
     def _initialize_root(self, db: NodeDatabase | NodeDatabaseSnapshot) -> bool:
         if self._initialized:
@@ -437,7 +403,7 @@ class TrajectoryPolicyBase(Selector):
         if not self.llm_policy_model:
             return ""
 
-        prompt = REFLECTION_PROMPT_TEMPLATE.format(
+        prompt = self.REFLECTION_TEMPLATE.format(
             llm_input=node.llm_input,
             code=node.code,
             metrics=metrics_to_text(node.metrics),
@@ -547,17 +513,12 @@ class TrajectoryPolicyBase(Selector):
             self.chains[chain_idx].append(best_node.id)
             self.chain_history[chain_idx].append(best_node.id)
             self._insert_sorted(chain_idx, best_node.id, best_node.score)
-            self.nodes_since_restart[chain_idx] += 1
 
         # Policy-specific locked operations (wrapped in try to ensure cleanup)
         try:
             self._finalize_hook_locked(pending, best_node, unlocked_result)
         except Exception:
             pass
-
-        if best_node and best_node.score > -float("inf"):
-            if self.nodes_since_restart[chain_idx] >= self.restart_every_n:
-                self._reset_chain_locked(chain_idx)
 
         # Scheduling state (ALWAYS runs for cleanup)
         self.chain_prompt_count[chain_idx] += 1
@@ -730,9 +691,6 @@ class TrajectoryPolicyBase(Selector):
                 nodes.sort(key=score_key, reverse=True)
                 self._chain_sorted[chain_idx] = [(-float(n.score), n.id) for n in nodes]
 
-            for i in range(self.num_chains):
-                self.nodes_since_restart.setdefault(i, 0)
-
             # Note: _batches is cleared on resume (load_state_dict), so no normalization needed
 
     def state_dict(self) -> dict[str, Any]:
@@ -741,7 +699,6 @@ class TrajectoryPolicyBase(Selector):
                 "num_chains": self.num_chains,
                 "max_generations": self.max_generations,
                 "k": self.k,
-                "restart_every_n": self.restart_every_n,
                 "min_inspirations_cnt": self.min_inspirations_cnt,
                 "max_inspirations_cnt": self.max_inspirations_cnt,
                 "reflection_mode": self.reflection_mode,
@@ -752,7 +709,6 @@ class TrajectoryPolicyBase(Selector):
                 "chains": {str(k): list(v) for k, v in self.chains.items()},
                 "chain_history": {str(k): list(v) for k, v in self.chain_history.items()},
                 "chain_prompt_count": {str(k): v for k, v in self.chain_prompt_count.items()},
-                "nodes_since_restart": {str(k): v for k, v in self.nodes_since_restart.items()},
                 "ready_chains": self._ready_chains,
                 # Note: batches are cleared on resume anyway
                 "batches": {str(k): dict(v) for k, v in self._batches.items()},
@@ -783,7 +739,6 @@ class TrajectoryPolicyBase(Selector):
             self.num_chains = int(state.get("num_chains", self.num_chains))
             self.max_generations = int(state.get("max_generations", self.max_generations))
             self.k = int(state.get("k", self.k))
-            self.restart_every_n = int(state.get("restart_every_n", self.restart_every_n))
             self.min_inspirations_cnt = state.get("min_inspirations_cnt", self.min_inspirations_cnt)
             self.max_inspirations_cnt = state.get("max_inspirations_cnt", self.max_inspirations_cnt)
 
@@ -810,9 +765,6 @@ class TrajectoryPolicyBase(Selector):
             }
             self.chain_prompt_count = {
                 int(k): int(v) for k, v in state.get("chain_prompt_count", {}).items()
-            }
-            self.nodes_since_restart = {
-                int(k): int(v) for k, v in state.get("nodes_since_restart", {}).items()
             }
 
             # Clear pending batches on resume - they can never complete
@@ -853,14 +805,11 @@ class TrajectoryPolicyBase(Selector):
                 self.chains.setdefault(i, [])
                 self.chain_history.setdefault(i, [])
                 self.chain_prompt_count.setdefault(i, 0)
-                self.nodes_since_restart.setdefault(i, 0)
                 self.chain_gen_budget.setdefault(i, 0)
                 self.prompt_budget.setdefault(i, 0)
                 self._chain_sorted.setdefault(i, [])
                 self._chain_error_counts.setdefault(i, {})
                 self._chain_total_counts.setdefault(i, 1)
-
-            self._validate_restart_every_n()
 
             # Rebuild _ready_chains: all chains with remaining budget
             # (no pending batches since we cleared _batches on resume)

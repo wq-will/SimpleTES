@@ -333,7 +333,11 @@ def build_entry_manifest(
         model = None
     policy_name = policy.get("name")
     if not isinstance(policy_name, str):
-        policy_name = config.get("inspiration_policy") if isinstance(config.get("inspiration_policy"), str) else None
+        # The engine config field was renamed "inspiration_policy" -> "selector";
+        # prefer the current name and fall back to the legacy one.
+        policy_name = config.get("selector") or config.get("inspiration_policy")
+        if not isinstance(policy_name, str):
+            policy_name = None
 
     best_score = metadata.get("best_score")
     if isinstance(best_score, (int, float)):

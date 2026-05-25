@@ -168,7 +168,6 @@ class EngineConfig:
     num_chains: int = 4  # Number of independent chains
     k_candidates: int = 4  # (balance/puct) Candidates per prompt, keep only best
     stream_k_candidates: bool = True  # Dispatch k candidates as independent k=1 jobs
-    restart_every_n: int = 50  # Reset chain to its best node after every N kept nodes
     include_failure_patterns: bool = True  # Include failure patterns in the prompt
     debug_prompt_lines: int = 0  # Print first N lines of generator prompt (0 = disabled)
     include_construction: bool = False  # Enable per-chain shared construction: save and provide GLOBAL_BEST_CONSTRUCTION from each chain's best solution to the LLM prompt
@@ -185,7 +184,10 @@ class EngineConfig:
     elite_selection_strategy: str = "linear_rank"  # "linear_rank" or "balance"
 
     # Backpressure
-    backpressure_multiplier: float = 0  # Multiplier for backpressure threshold (0 = no backpressure)
+    # Per-chain in-flight batch cap: a chain is selectable only when its
+    # in-flight batch count is <= this value. With 0 each chain runs strictly
+    # one batch at a time; higher values loosen per-chain concurrency.
+    backpressure_multiplier: float = 0
 
 
 # ============================================================================
@@ -237,7 +239,6 @@ def build_config_from_args(args: Any) -> EngineConfig:
         elite_ratio=args.elite_ratio,
         num_chains=args.num_chains,
         k_candidates=args.k_candidates,
-        restart_every_n=args.restart_every_n,
         stream_k_candidates=args.stream_k_candidates,
         debug_prompt_lines=args.debug_prompt_lines,
         include_construction=args.include_construction,
