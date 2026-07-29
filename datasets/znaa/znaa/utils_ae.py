@@ -1014,6 +1014,17 @@ class ZNAAConfig:
         self._slm_geometry_cache = None
         self._zone_layout_cache = None
 
+        self.storage_shape, self.entangling_shape, self.readout_shape = (
+            shape_storage,
+            shape_entangling,
+            shape_readout,
+        )
+        self.shape_storage, self.shape_entangling, self.shape_readout = (
+            shape_storage,
+            shape_entangling,
+            shape_readout,
+        )
+
     def max_qubits(self):
         return self.storage[0] * self.storage[1]
 
@@ -2421,6 +2432,7 @@ class Router(AbstractRouter):
         out = [[] for _ in range(len(placements) - 1)]
         for i in range(len(mapped) - 1):
             src_m, dst_m, remain = mapped[i], mapped[i + 1], [q for q in range(len(mapped[i])) if mapped[i][q] != mapped[i + 1][q]]
+            remain.sort(key=lambda q: (math.dist(self.config.slm_site_xy(src_m[q]), self.config.slm_site_xy(dst_m[q])), q), reverse=True)
             while remain:
                 vec = []
                 for q in remain:

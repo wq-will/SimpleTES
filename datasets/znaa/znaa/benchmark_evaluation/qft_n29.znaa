@@ -1,0 +1,1473 @@
+1q u 1
+2q cz 1 0
+1q u 0
+2q cz 1 0
+1q u 0
+1q u 2
+2q cz 2 0
+1q u 0
+2q cz 2 0
+1q u 0
+2q cz 2 1
+1q u 1
+2q cz 2 1
+1q u 1
+1q u 3
+2q cz 3 0
+1q u 0
+2q cz 3 0
+1q u 0
+2q cz 3 1
+1q u 1
+2q cz 3 1
+1q u 1
+2q cz 3 2
+1q u 2
+2q cz 3 2
+1q u 2
+1q u 4
+2q cz 4 0
+1q u 0
+2q cz 4 0
+1q u 0
+2q cz 4 1
+1q u 1
+2q cz 4 1
+1q u 1
+2q cz 4 2
+1q u 2
+2q cz 4 2
+1q u 2
+2q cz 4 3
+1q u 3
+2q cz 4 3
+1q u 3
+1q u 5
+2q cz 5 0
+1q u 0
+2q cz 5 0
+1q u 0
+2q cz 5 1
+1q u 1
+2q cz 5 1
+1q u 1
+2q cz 5 2
+1q u 2
+2q cz 5 2
+1q u 2
+2q cz 5 3
+1q u 3
+2q cz 5 3
+1q u 3
+2q cz 5 4
+1q u 4
+2q cz 5 4
+1q u 4
+1q u 6
+2q cz 6 0
+1q u 0
+2q cz 6 0
+1q u 0
+2q cz 6 1
+1q u 1
+2q cz 6 1
+1q u 1
+2q cz 6 2
+1q u 2
+2q cz 6 2
+1q u 2
+2q cz 6 3
+1q u 3
+2q cz 6 3
+1q u 3
+2q cz 6 4
+1q u 4
+2q cz 6 4
+1q u 4
+2q cz 6 5
+1q u 5
+2q cz 6 5
+1q u 5
+1q u 7
+2q cz 7 0
+1q u 0
+2q cz 7 0
+1q u 0
+2q cz 7 1
+1q u 1
+2q cz 7 1
+1q u 1
+2q cz 7 2
+1q u 2
+2q cz 7 2
+1q u 2
+2q cz 7 3
+1q u 3
+2q cz 7 3
+1q u 3
+2q cz 7 4
+1q u 4
+2q cz 7 4
+1q u 4
+2q cz 7 5
+1q u 5
+2q cz 7 5
+1q u 5
+2q cz 7 6
+1q u 6
+2q cz 7 6
+1q u 6
+1q u 8
+2q cz 8 0
+1q u 0
+2q cz 8 0
+1q u 0
+2q cz 8 1
+1q u 1
+2q cz 8 1
+1q u 1
+2q cz 8 2
+1q u 2
+2q cz 8 2
+1q u 2
+2q cz 8 3
+1q u 3
+2q cz 8 3
+1q u 3
+2q cz 8 4
+1q u 4
+2q cz 8 4
+1q u 4
+2q cz 8 5
+1q u 5
+2q cz 8 5
+1q u 5
+2q cz 8 6
+1q u 6
+2q cz 8 6
+1q u 6
+2q cz 8 7
+1q u 7
+2q cz 8 7
+1q u 7
+1q u 9
+2q cz 9 0
+1q u 0
+2q cz 9 0
+1q u 0
+2q cz 9 1
+1q u 1
+2q cz 9 1
+1q u 1
+2q cz 9 2
+1q u 2
+2q cz 9 2
+1q u 2
+2q cz 9 3
+1q u 3
+2q cz 9 3
+1q u 3
+2q cz 9 4
+1q u 4
+2q cz 9 4
+1q u 4
+2q cz 9 5
+1q u 5
+2q cz 9 5
+1q u 5
+2q cz 9 6
+1q u 6
+2q cz 9 6
+1q u 6
+2q cz 9 7
+1q u 7
+2q cz 9 7
+1q u 7
+2q cz 9 8
+1q u 8
+2q cz 9 8
+1q u 8
+1q u 10
+2q cz 10 0
+1q u 0
+2q cz 10 0
+1q u 0
+2q cz 10 1
+1q u 1
+2q cz 10 1
+1q u 1
+2q cz 10 2
+1q u 2
+2q cz 10 2
+1q u 2
+2q cz 10 3
+1q u 3
+2q cz 10 3
+1q u 3
+2q cz 10 4
+1q u 4
+2q cz 10 4
+1q u 4
+2q cz 10 5
+1q u 5
+2q cz 10 5
+1q u 5
+2q cz 10 6
+1q u 6
+2q cz 10 6
+1q u 6
+2q cz 10 7
+1q u 7
+2q cz 10 7
+1q u 7
+2q cz 10 8
+1q u 8
+2q cz 10 8
+1q u 8
+2q cz 10 9
+1q u 9
+2q cz 10 9
+1q u 9
+1q u 11
+2q cz 11 0
+1q u 0
+2q cz 11 0
+1q u 0
+2q cz 11 1
+1q u 1
+2q cz 11 1
+1q u 1
+2q cz 11 2
+1q u 2
+2q cz 11 2
+1q u 2
+2q cz 11 3
+1q u 3
+2q cz 11 3
+1q u 3
+2q cz 11 4
+1q u 4
+2q cz 11 4
+1q u 4
+2q cz 11 5
+1q u 5
+2q cz 11 5
+1q u 5
+2q cz 11 6
+1q u 6
+2q cz 11 6
+1q u 6
+2q cz 11 7
+1q u 7
+2q cz 11 7
+1q u 7
+2q cz 11 8
+1q u 8
+2q cz 11 8
+1q u 8
+2q cz 11 9
+1q u 9
+2q cz 11 9
+1q u 9
+2q cz 11 10
+1q u 10
+2q cz 11 10
+1q u 10
+1q u 12
+2q cz 12 0
+1q u 0
+2q cz 12 0
+1q u 0
+2q cz 12 1
+1q u 1
+2q cz 12 1
+1q u 1
+2q cz 12 2
+1q u 2
+2q cz 12 2
+1q u 2
+2q cz 12 3
+1q u 3
+2q cz 12 3
+1q u 3
+2q cz 12 4
+1q u 4
+2q cz 12 4
+1q u 4
+2q cz 12 5
+1q u 5
+2q cz 12 5
+1q u 5
+2q cz 12 6
+1q u 6
+2q cz 12 6
+1q u 6
+2q cz 12 7
+1q u 7
+2q cz 12 7
+1q u 7
+2q cz 12 8
+1q u 8
+2q cz 12 8
+1q u 8
+2q cz 12 9
+1q u 9
+2q cz 12 9
+1q u 9
+2q cz 12 10
+1q u 10
+2q cz 12 10
+1q u 10
+2q cz 12 11
+1q u 11
+2q cz 12 11
+1q u 11
+1q u 13
+2q cz 13 0
+1q u 0
+2q cz 13 0
+1q u 0
+2q cz 13 1
+1q u 1
+2q cz 13 1
+1q u 1
+2q cz 13 2
+1q u 2
+2q cz 13 2
+1q u 2
+2q cz 13 3
+1q u 3
+2q cz 13 3
+1q u 3
+2q cz 13 4
+1q u 4
+2q cz 13 4
+1q u 4
+2q cz 13 5
+1q u 5
+2q cz 13 5
+1q u 5
+2q cz 13 6
+1q u 6
+2q cz 13 6
+1q u 6
+2q cz 13 7
+1q u 7
+2q cz 13 7
+1q u 7
+2q cz 13 8
+1q u 8
+2q cz 13 8
+1q u 8
+2q cz 13 9
+1q u 9
+2q cz 13 9
+1q u 9
+2q cz 13 10
+1q u 10
+2q cz 13 10
+1q u 10
+2q cz 13 11
+1q u 11
+2q cz 13 11
+1q u 11
+2q cz 13 12
+1q u 12
+2q cz 13 12
+1q u 12
+1q u 14
+2q cz 14 0
+1q u 0
+2q cz 14 0
+1q u 0
+2q cz 14 1
+1q u 1
+2q cz 14 1
+1q u 1
+2q cz 14 2
+1q u 2
+2q cz 14 2
+1q u 2
+2q cz 14 3
+1q u 3
+2q cz 14 3
+1q u 3
+2q cz 14 4
+1q u 4
+2q cz 14 4
+1q u 4
+2q cz 14 5
+1q u 5
+2q cz 14 5
+1q u 5
+2q cz 14 6
+1q u 6
+2q cz 14 6
+1q u 6
+2q cz 14 7
+1q u 7
+2q cz 14 7
+1q u 7
+2q cz 14 8
+1q u 8
+2q cz 14 8
+1q u 8
+2q cz 14 9
+1q u 9
+2q cz 14 9
+1q u 9
+2q cz 14 10
+1q u 10
+2q cz 14 10
+1q u 10
+2q cz 14 11
+1q u 11
+2q cz 14 11
+1q u 11
+2q cz 14 12
+1q u 12
+2q cz 14 12
+1q u 12
+2q cz 14 13
+1q u 13
+2q cz 14 13
+1q u 13
+1q u 15
+2q cz 15 0
+1q u 0
+2q cz 15 0
+1q u 0
+2q cz 15 1
+1q u 1
+2q cz 15 1
+1q u 1
+2q cz 15 2
+1q u 2
+2q cz 15 2
+1q u 2
+2q cz 15 3
+1q u 3
+2q cz 15 3
+1q u 3
+2q cz 15 4
+1q u 4
+2q cz 15 4
+1q u 4
+2q cz 15 5
+1q u 5
+2q cz 15 5
+1q u 5
+2q cz 15 6
+1q u 6
+2q cz 15 6
+1q u 6
+2q cz 15 7
+1q u 7
+2q cz 15 7
+1q u 7
+2q cz 15 8
+1q u 8
+2q cz 15 8
+1q u 8
+2q cz 15 9
+1q u 9
+2q cz 15 9
+1q u 9
+2q cz 15 10
+1q u 10
+2q cz 15 10
+1q u 10
+2q cz 15 11
+1q u 11
+2q cz 15 11
+1q u 11
+2q cz 15 12
+1q u 12
+2q cz 15 12
+1q u 12
+2q cz 15 13
+1q u 13
+2q cz 15 13
+1q u 13
+2q cz 15 14
+1q u 14
+2q cz 15 14
+1q u 14
+1q u 16
+2q cz 16 0
+1q u 0
+2q cz 16 0
+1q u 0
+2q cz 16 1
+1q u 1
+2q cz 16 1
+1q u 1
+2q cz 16 2
+1q u 2
+2q cz 16 2
+1q u 2
+2q cz 16 3
+1q u 3
+2q cz 16 3
+1q u 3
+2q cz 16 4
+1q u 4
+2q cz 16 4
+1q u 4
+2q cz 16 5
+1q u 5
+2q cz 16 5
+1q u 5
+2q cz 16 6
+1q u 6
+2q cz 16 6
+1q u 6
+2q cz 16 7
+1q u 7
+2q cz 16 7
+1q u 7
+2q cz 16 8
+1q u 8
+2q cz 16 8
+1q u 8
+2q cz 16 9
+1q u 9
+2q cz 16 9
+1q u 9
+2q cz 16 10
+1q u 10
+2q cz 16 10
+1q u 10
+2q cz 16 11
+1q u 11
+2q cz 16 11
+1q u 11
+2q cz 16 12
+1q u 12
+2q cz 16 12
+1q u 12
+2q cz 16 13
+1q u 13
+2q cz 16 13
+1q u 13
+2q cz 16 14
+1q u 14
+2q cz 16 14
+1q u 14
+2q cz 16 15
+1q u 15
+2q cz 16 15
+1q u 15
+1q u 17
+2q cz 17 0
+1q u 0
+2q cz 17 0
+1q u 0
+2q cz 17 1
+1q u 1
+2q cz 17 1
+1q u 1
+2q cz 17 2
+1q u 2
+2q cz 17 2
+1q u 2
+2q cz 17 3
+1q u 3
+2q cz 17 3
+1q u 3
+2q cz 17 4
+1q u 4
+2q cz 17 4
+1q u 4
+2q cz 17 5
+1q u 5
+2q cz 17 5
+1q u 5
+2q cz 17 6
+1q u 6
+2q cz 17 6
+1q u 6
+2q cz 17 7
+1q u 7
+2q cz 17 7
+1q u 7
+2q cz 17 8
+1q u 8
+2q cz 17 8
+1q u 8
+2q cz 17 9
+1q u 9
+2q cz 17 9
+1q u 9
+2q cz 17 10
+1q u 10
+2q cz 17 10
+1q u 10
+2q cz 17 11
+1q u 11
+2q cz 17 11
+1q u 11
+2q cz 17 12
+1q u 12
+2q cz 17 12
+1q u 12
+2q cz 17 13
+1q u 13
+2q cz 17 13
+1q u 13
+2q cz 17 14
+1q u 14
+2q cz 17 14
+1q u 14
+2q cz 17 15
+1q u 15
+2q cz 17 15
+1q u 15
+2q cz 17 16
+1q u 16
+2q cz 17 16
+1q u 16
+1q u 18
+2q cz 18 0
+1q u 0
+2q cz 18 0
+1q u 0
+2q cz 18 1
+1q u 1
+2q cz 18 1
+1q u 1
+2q cz 18 2
+1q u 2
+2q cz 18 2
+1q u 2
+2q cz 18 3
+1q u 3
+2q cz 18 3
+1q u 3
+2q cz 18 4
+1q u 4
+2q cz 18 4
+1q u 4
+2q cz 18 5
+1q u 5
+2q cz 18 5
+1q u 5
+2q cz 18 6
+1q u 6
+2q cz 18 6
+1q u 6
+2q cz 18 7
+1q u 7
+2q cz 18 7
+1q u 7
+2q cz 18 8
+1q u 8
+2q cz 18 8
+1q u 8
+2q cz 18 9
+1q u 9
+2q cz 18 9
+1q u 9
+2q cz 18 10
+1q u 10
+2q cz 18 10
+1q u 10
+2q cz 18 11
+1q u 11
+2q cz 18 11
+1q u 11
+2q cz 18 12
+1q u 12
+2q cz 18 12
+1q u 12
+2q cz 18 13
+1q u 13
+2q cz 18 13
+1q u 13
+2q cz 18 14
+1q u 14
+2q cz 18 14
+1q u 14
+2q cz 18 15
+1q u 15
+2q cz 18 15
+1q u 15
+2q cz 18 16
+1q u 16
+2q cz 18 16
+1q u 16
+2q cz 18 17
+1q u 17
+2q cz 18 17
+1q u 17
+1q u 19
+2q cz 19 0
+1q u 0
+2q cz 19 0
+1q u 0
+2q cz 19 1
+1q u 1
+2q cz 19 1
+1q u 1
+2q cz 19 2
+1q u 2
+2q cz 19 2
+1q u 2
+2q cz 19 3
+1q u 3
+2q cz 19 3
+1q u 3
+2q cz 19 4
+1q u 4
+2q cz 19 4
+1q u 4
+2q cz 19 5
+1q u 5
+2q cz 19 5
+1q u 5
+2q cz 19 6
+1q u 6
+2q cz 19 6
+1q u 6
+2q cz 19 7
+1q u 7
+2q cz 19 7
+1q u 7
+2q cz 19 8
+1q u 8
+2q cz 19 8
+1q u 8
+2q cz 19 9
+1q u 9
+2q cz 19 9
+1q u 9
+2q cz 19 10
+1q u 10
+2q cz 19 10
+1q u 10
+2q cz 19 11
+1q u 11
+2q cz 19 11
+1q u 11
+2q cz 19 12
+1q u 12
+2q cz 19 12
+1q u 12
+2q cz 19 13
+1q u 13
+2q cz 19 13
+1q u 13
+2q cz 19 14
+1q u 14
+2q cz 19 14
+1q u 14
+2q cz 19 15
+1q u 15
+2q cz 19 15
+1q u 15
+2q cz 19 16
+1q u 16
+2q cz 19 16
+1q u 16
+2q cz 19 17
+1q u 17
+2q cz 19 17
+1q u 17
+2q cz 19 18
+1q u 18
+2q cz 19 18
+1q u 18
+1q u 20
+2q cz 20 1
+1q u 1
+2q cz 20 1
+1q u 1
+2q cz 20 2
+1q u 2
+2q cz 20 2
+1q u 2
+2q cz 20 3
+1q u 3
+2q cz 20 3
+1q u 3
+2q cz 20 4
+1q u 4
+2q cz 20 4
+1q u 4
+2q cz 20 5
+1q u 5
+2q cz 20 5
+1q u 5
+2q cz 20 6
+1q u 6
+2q cz 20 6
+1q u 6
+2q cz 20 7
+1q u 7
+2q cz 20 7
+1q u 7
+2q cz 20 8
+1q u 8
+2q cz 20 8
+1q u 8
+2q cz 20 9
+1q u 9
+2q cz 20 9
+1q u 9
+2q cz 20 10
+1q u 10
+2q cz 20 10
+1q u 10
+2q cz 20 11
+1q u 11
+2q cz 20 11
+1q u 11
+2q cz 20 12
+1q u 12
+2q cz 20 12
+1q u 12
+2q cz 20 13
+1q u 13
+2q cz 20 13
+1q u 13
+2q cz 20 14
+1q u 14
+2q cz 20 14
+1q u 14
+2q cz 20 15
+1q u 15
+2q cz 20 15
+1q u 15
+2q cz 20 16
+1q u 16
+2q cz 20 16
+1q u 16
+2q cz 20 17
+1q u 17
+2q cz 20 17
+1q u 17
+2q cz 20 18
+1q u 18
+2q cz 20 18
+1q u 18
+2q cz 20 19
+1q u 19
+2q cz 20 19
+1q u 19
+1q u 21
+2q cz 21 2
+1q u 2
+2q cz 21 2
+1q u 2
+2q cz 21 3
+1q u 3
+2q cz 21 3
+1q u 3
+2q cz 21 4
+1q u 4
+2q cz 21 4
+1q u 4
+2q cz 21 5
+1q u 5
+2q cz 21 5
+1q u 5
+2q cz 21 6
+1q u 6
+2q cz 21 6
+1q u 6
+2q cz 21 7
+1q u 7
+2q cz 21 7
+1q u 7
+2q cz 21 8
+1q u 8
+2q cz 21 8
+1q u 8
+2q cz 21 9
+1q u 9
+2q cz 21 9
+1q u 9
+2q cz 21 10
+1q u 10
+2q cz 21 10
+1q u 10
+2q cz 21 11
+1q u 11
+2q cz 21 11
+1q u 11
+2q cz 21 12
+1q u 12
+2q cz 21 12
+1q u 12
+2q cz 21 13
+1q u 13
+2q cz 21 13
+1q u 13
+2q cz 21 14
+1q u 14
+2q cz 21 14
+1q u 14
+2q cz 21 15
+1q u 15
+2q cz 21 15
+1q u 15
+2q cz 21 16
+1q u 16
+2q cz 21 16
+1q u 16
+2q cz 21 17
+1q u 17
+2q cz 21 17
+1q u 17
+2q cz 21 18
+1q u 18
+2q cz 21 18
+1q u 18
+2q cz 21 19
+1q u 19
+2q cz 21 19
+1q u 19
+2q cz 21 20
+1q u 20
+2q cz 21 20
+1q u 20
+1q u 22
+2q cz 22 3
+1q u 3
+2q cz 22 3
+1q u 3
+2q cz 22 4
+1q u 4
+2q cz 22 4
+1q u 4
+2q cz 22 5
+1q u 5
+2q cz 22 5
+1q u 5
+2q cz 22 6
+1q u 6
+2q cz 22 6
+1q u 6
+2q cz 22 7
+1q u 7
+2q cz 22 7
+1q u 7
+2q cz 22 8
+1q u 8
+2q cz 22 8
+1q u 8
+2q cz 22 9
+1q u 9
+2q cz 22 9
+1q u 9
+2q cz 22 10
+1q u 10
+2q cz 22 10
+1q u 10
+2q cz 22 11
+1q u 11
+2q cz 22 11
+1q u 11
+2q cz 22 12
+1q u 12
+2q cz 22 12
+1q u 12
+2q cz 22 13
+1q u 13
+2q cz 22 13
+1q u 13
+2q cz 22 14
+1q u 14
+2q cz 22 14
+1q u 14
+2q cz 22 15
+1q u 15
+2q cz 22 15
+1q u 15
+2q cz 22 16
+1q u 16
+2q cz 22 16
+1q u 16
+2q cz 22 17
+1q u 17
+2q cz 22 17
+1q u 17
+2q cz 22 18
+1q u 18
+2q cz 22 18
+1q u 18
+2q cz 22 19
+1q u 19
+2q cz 22 19
+1q u 19
+2q cz 22 20
+1q u 20
+2q cz 22 20
+1q u 20
+2q cz 22 21
+1q u 21
+2q cz 22 21
+1q u 21
+1q u 23
+2q cz 23 4
+1q u 4
+2q cz 23 4
+1q u 4
+2q cz 23 5
+1q u 5
+2q cz 23 5
+1q u 5
+2q cz 23 6
+1q u 6
+2q cz 23 6
+1q u 6
+2q cz 23 7
+1q u 7
+2q cz 23 7
+1q u 7
+2q cz 23 8
+1q u 8
+2q cz 23 8
+1q u 8
+2q cz 23 9
+1q u 9
+2q cz 23 9
+1q u 9
+2q cz 23 10
+1q u 10
+2q cz 23 10
+1q u 10
+2q cz 23 11
+1q u 11
+2q cz 23 11
+1q u 11
+2q cz 23 12
+1q u 12
+2q cz 23 12
+1q u 12
+2q cz 23 13
+1q u 13
+2q cz 23 13
+1q u 13
+2q cz 23 14
+1q u 14
+2q cz 23 14
+1q u 14
+2q cz 23 15
+1q u 15
+2q cz 23 15
+1q u 15
+2q cz 23 16
+1q u 16
+2q cz 23 16
+1q u 16
+2q cz 23 17
+1q u 17
+2q cz 23 17
+1q u 17
+2q cz 23 18
+1q u 18
+2q cz 23 18
+1q u 18
+2q cz 23 19
+1q u 19
+2q cz 23 19
+1q u 19
+2q cz 23 20
+1q u 20
+2q cz 23 20
+1q u 20
+2q cz 23 21
+1q u 21
+2q cz 23 21
+1q u 21
+2q cz 23 22
+1q u 22
+2q cz 23 22
+1q u 22
+1q u 24
+2q cz 24 5
+1q u 5
+2q cz 24 5
+1q u 5
+2q cz 24 6
+1q u 6
+2q cz 24 6
+1q u 6
+2q cz 24 7
+1q u 7
+2q cz 24 7
+1q u 7
+2q cz 24 8
+1q u 8
+2q cz 24 8
+1q u 8
+2q cz 24 9
+1q u 9
+2q cz 24 9
+1q u 9
+2q cz 24 10
+1q u 10
+2q cz 24 10
+1q u 10
+2q cz 24 11
+1q u 11
+2q cz 24 11
+1q u 11
+2q cz 24 12
+1q u 12
+2q cz 24 12
+1q u 12
+2q cz 24 13
+1q u 13
+2q cz 24 13
+1q u 13
+2q cz 24 14
+1q u 14
+2q cz 24 14
+1q u 14
+2q cz 24 15
+1q u 15
+2q cz 24 15
+1q u 15
+2q cz 24 16
+1q u 16
+2q cz 24 16
+1q u 16
+2q cz 24 17
+1q u 17
+2q cz 24 17
+1q u 17
+2q cz 24 18
+1q u 18
+2q cz 24 18
+1q u 18
+2q cz 24 19
+1q u 19
+2q cz 24 19
+1q u 19
+2q cz 24 20
+1q u 20
+2q cz 24 20
+1q u 20
+2q cz 24 21
+1q u 21
+2q cz 24 21
+1q u 21
+2q cz 24 22
+1q u 22
+2q cz 24 22
+1q u 22
+2q cz 24 23
+1q u 23
+2q cz 24 23
+1q u 23
+1q u 25
+2q cz 25 6
+1q u 6
+2q cz 25 6
+1q u 6
+2q cz 25 7
+1q u 7
+2q cz 25 7
+1q u 7
+2q cz 25 8
+1q u 8
+2q cz 25 8
+1q u 8
+2q cz 25 9
+1q u 9
+2q cz 25 9
+1q u 9
+2q cz 25 10
+1q u 10
+2q cz 25 10
+1q u 10
+2q cz 25 11
+1q u 11
+2q cz 25 11
+1q u 11
+2q cz 25 12
+1q u 12
+2q cz 25 12
+1q u 12
+2q cz 25 13
+1q u 13
+2q cz 25 13
+1q u 13
+2q cz 25 14
+1q u 14
+2q cz 25 14
+1q u 14
+2q cz 25 15
+1q u 15
+2q cz 25 15
+1q u 15
+2q cz 25 16
+1q u 16
+2q cz 25 16
+1q u 16
+2q cz 25 17
+1q u 17
+2q cz 25 17
+1q u 17
+2q cz 25 18
+1q u 18
+2q cz 25 18
+1q u 18
+2q cz 25 19
+1q u 19
+2q cz 25 19
+1q u 19
+2q cz 25 20
+1q u 20
+2q cz 25 20
+1q u 20
+2q cz 25 21
+1q u 21
+2q cz 25 21
+1q u 21
+2q cz 25 22
+1q u 22
+2q cz 25 22
+1q u 22
+2q cz 25 23
+1q u 23
+2q cz 25 23
+1q u 23
+2q cz 25 24
+1q u 24
+2q cz 25 24
+1q u 24
+1q u 26
+2q cz 26 7
+1q u 7
+2q cz 26 7
+1q u 7
+2q cz 26 8
+1q u 8
+2q cz 26 8
+1q u 8
+2q cz 26 9
+1q u 9
+2q cz 26 9
+1q u 9
+2q cz 26 10
+1q u 10
+2q cz 26 10
+1q u 10
+2q cz 26 11
+1q u 11
+2q cz 26 11
+1q u 11
+2q cz 26 12
+1q u 12
+2q cz 26 12
+1q u 12
+2q cz 26 13
+1q u 13
+2q cz 26 13
+1q u 13
+2q cz 26 14
+1q u 14
+2q cz 26 14
+1q u 14
+2q cz 26 15
+1q u 15
+2q cz 26 15
+1q u 15
+2q cz 26 16
+1q u 16
+2q cz 26 16
+1q u 16
+2q cz 26 17
+1q u 17
+2q cz 26 17
+1q u 17
+2q cz 26 18
+1q u 18
+2q cz 26 18
+1q u 18
+2q cz 26 19
+1q u 19
+2q cz 26 19
+1q u 19
+2q cz 26 20
+1q u 20
+2q cz 26 20
+1q u 20
+2q cz 26 21
+1q u 21
+2q cz 26 21
+1q u 21
+2q cz 26 22
+1q u 22
+2q cz 26 22
+1q u 22
+2q cz 26 23
+1q u 23
+2q cz 26 23
+1q u 23
+2q cz 26 24
+1q u 24
+2q cz 26 24
+1q u 24
+2q cz 26 25
+1q u 25
+2q cz 26 25
+1q u 25
+1q u 27
+2q cz 27 8
+1q u 8
+2q cz 27 8
+1q u 8
+2q cz 27 9
+1q u 9
+2q cz 27 9
+1q u 9
+2q cz 27 10
+1q u 10
+2q cz 27 10
+1q u 10
+2q cz 27 11
+1q u 11
+2q cz 27 11
+1q u 11
+2q cz 27 12
+1q u 12
+2q cz 27 12
+1q u 12
+2q cz 27 13
+1q u 13
+2q cz 27 13
+1q u 13
+2q cz 27 14
+1q u 14
+2q cz 27 14
+1q u 14
+2q cz 27 15
+1q u 15
+2q cz 27 15
+1q u 15
+2q cz 27 16
+1q u 16
+2q cz 27 16
+1q u 16
+2q cz 27 17
+1q u 17
+2q cz 27 17
+1q u 17
+2q cz 27 18
+1q u 18
+2q cz 27 18
+1q u 18
+2q cz 27 19
+1q u 19
+2q cz 27 19
+1q u 19
+2q cz 27 20
+1q u 20
+2q cz 27 20
+1q u 20
+2q cz 27 21
+1q u 21
+2q cz 27 21
+1q u 21
+2q cz 27 22
+1q u 22
+2q cz 27 22
+1q u 22
+2q cz 27 23
+1q u 23
+2q cz 27 23
+1q u 23
+2q cz 27 24
+1q u 24
+2q cz 27 24
+1q u 24
+2q cz 27 25
+1q u 25
+2q cz 27 25
+1q u 25
+2q cz 27 26
+1q u 26
+2q cz 27 26
+1q u 26
+1q u 28
+2q cz 28 9
+1q u 9
+2q cz 28 9
+1q u 9
+2q cz 28 10
+1q u 10
+2q cz 28 10
+1q u 10
+2q cz 28 11
+1q u 11
+2q cz 28 11
+1q u 11
+2q cz 28 12
+1q u 12
+2q cz 28 12
+1q u 12
+2q cz 28 13
+1q u 13
+2q cz 28 13
+1q u 13
+2q cz 28 14
+1q u 14
+2q cz 28 14
+1q u 14
+2q cz 28 15
+1q u 15
+2q cz 28 15
+1q u 15
+2q cz 28 16
+1q u 16
+2q cz 28 16
+1q u 16
+2q cz 28 17
+1q u 17
+2q cz 28 17
+1q u 17
+2q cz 28 18
+1q u 18
+2q cz 28 18
+1q u 18
+2q cz 28 19
+1q u 19
+2q cz 28 19
+1q u 19
+2q cz 28 20
+1q u 20
+2q cz 28 20
+1q u 20
+2q cz 28 21
+1q u 21
+2q cz 28 21
+1q u 21
+2q cz 28 22
+1q u 22
+2q cz 28 22
+1q u 22
+2q cz 28 23
+1q u 23
+2q cz 28 23
+1q u 23
+2q cz 28 24
+1q u 24
+2q cz 28 24
+1q u 24
+2q cz 28 25
+1q u 25
+2q cz 28 25
+1q u 25
+2q cz 28 26
+1q u 26
+2q cz 28 26
+1q u 26
+2q cz 28 27
+1q u 27
+2q cz 28 27
+1q u 27
+1q u 28

@@ -34,3 +34,13 @@ python main.py \
 ```
 
 Score aggregates per-circuit metrics (fidelity, stage count, timing) into a single `combined_score`; see `znaa/evaluator.py` for the weighting.
+
+## Evaluating
+
+```bash
+python znaa/evaluator.py \
+  --min-qubit 0 \
+  --max-qubit 1000 \
+  --benchmark-folder benchmark_evaluation \
+  --program-path ../../../best_results/quantum_compilation/compilation_for_zoned_neutral_atom_quantum_architectures/compilation_for_zoned_neutral_atom_quantum_architectures_best.py
+```

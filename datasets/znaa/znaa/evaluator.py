@@ -30,6 +30,7 @@ else:
 
 _EVAL_ROOT = Path(__file__).resolve().parent
 _LIB_CIRCUITS = _EVAL_ROOT / "benchmark"
+# "benchmark" folder is used for evolving, "benchmark_evaluation" folder is used for reproducing test results of "compilation_for_zoned_neutral_atom_quantum_architectures_best.py"
 _UTILS_AE_PATH = _EVAL_ROOT / "utils_ae.py"
 _EVAL_CANDIDATE_MODULE: str = "_ae_evaluated_candidate"
 _trusted_hw_baseline_cache: tuple[tuple[Any, ...], tuple[Any, ...]] | None = None
@@ -49,13 +50,13 @@ _FAILURE_REASON_BY_ERROR = {
 }
 
 MIN_QUBIT: int = 0
-MAX_QUBIT: int = 300
+MAX_QUBIT: int = 1000
 
 _EVAL_CIRCUIT_NQ = re.compile(r"_n(\d+)$", re.IGNORECASE)
 _BAD_DROP_COORD_RE = re.compile(r"bad\s+drop\s+\{([A-Z])\(([-+]?\d+),([-+]?\d+)\)\}", re.IGNORECASE)
 
 # Total wall-clock budget for one evaluate() run. None or <= 0 disables it.
-TOTAL_RUNTIME_TIMEOUT_SEC: float | None = 1500.0
+TOTAL_RUNTIME_TIMEOUT_SEC: float | None = None
 
 # Per-circuit wall-clock limit. None or <= 0 disables it.
 COMPILATION_TIMEOUT_SEC: float | None = None
@@ -78,7 +79,7 @@ _BEST_PROGRAM_INDEX_PATH: Path = _BEST_STORE_DIR / "program_index.json"
 _BEST_PROGRAMS_DIR: Path = _BEST_STORE_DIR / "programs"
 _BEST_PLANS_DIR: Path = _BEST_STORE_DIR / "plans"
 _BEST_STORE_LOCK_PATH: Path = _BEST_STORE_DIR / ".lock"
-_BASELINE_STORE_PATH: Path = _EVAL_ROOT / ".evaluator_baselines.json"
+_BASELINE_STORE_PATH: Path = _EVAL_ROOT / ".evaluator_baseline.json"
 _CIRCUIT_BASELINES: dict[str, dict[str, Any]] = {}
 
 STAGE_ANALYSIS_WINDOW_SIZE: int = 3
@@ -3274,8 +3275,6 @@ class CircuitScoring:
                 "f_all": float(fidelity_now_all),
                 "f_non12": float(fidelity_now_non12 if fidelity_now_non12 is not None else fidelity_now_all),
             }
-            if stage_details:
-                baseline_entry["two_q_stage_details"] = StageAnalysis.serialize_for_baseline(stage_details)
             _CIRCUIT_BASELINES[baseline_key] = baseline_entry
             BaselineStore.save(_CIRCUIT_BASELINES)
             out[f"{stem}_time_improvement"] = 0.0
@@ -3289,15 +3288,15 @@ class CircuitScoring:
         baseline = _CIRCUIT_BASELINES[baseline_key]
         baseline_time = float(baseline.get("time_us", time_value))
         baseline_dirty = False
-        baseline_had_stage_details = isinstance(baseline.get("two_q_stage_details"), list)
+        baseline_stage_details = baseline.get("two_q_stage_details")
+        baseline_had_stage_details = (
+            isinstance(baseline_stage_details, list) and bool(baseline_stage_details)
+        )
         if "f_all" not in baseline:
             baseline["f_all"] = float(fidelity_now_all)
             if "f_non12" not in baseline:
                 fidelity_now_non12 = cls.non_1q2q_neglog(core)
                 baseline["f_non12"] = float(fidelity_now_non12 if fidelity_now_non12 is not None else fidelity_now_all)
-            baseline_dirty = True
-        if stage_details and not baseline_had_stage_details:
-            baseline["two_q_stage_details"] = StageAnalysis.serialize_for_baseline(stage_details)
             baseline_dirty = True
         if baseline_dirty:
             BaselineStore.save(_CIRCUIT_BASELINES)
@@ -3332,7 +3331,7 @@ class CircuitScoring:
         if stage_details and baseline_had_stage_details:
             meta["stage_comparison"] = StageAnalysis.compare_against_baseline(
                 stage_details,
-                baseline.get("two_q_stage_details"),
+                baseline_stage_details,
             )
         return meta
 
@@ -4006,7 +4005,7 @@ class EvaluationSession:
             baseline_key = CircuitCatalog.baseline_key(full_path)
             baseline_entry = _CIRCUIT_BASELINES.get(baseline_key)
             baseline_stage_details = baseline_entry.get("two_q_stage_details") if isinstance(baseline_entry, dict) else None
-            if not isinstance(baseline_stage_details, list):
+            if isinstance(baseline_stage_details, list) and baseline_stage_details:
                 stage_details = StageAnalysis.build_two_q_stage_details(stage_plan)
                 self.stage_details_cache[stem] = stage_details
         self.out.update(PublicOutputBuilder.prefix_keys(stem, core))
@@ -4049,7 +4048,7 @@ class EvaluationSession:
                 continue
             baseline_entry = _CIRCUIT_BASELINES.get(CircuitCatalog.baseline_key(stem))
             baseline_stage_details = baseline_entry.get("two_q_stage_details") if isinstance(baseline_entry, dict) else None
-            if not isinstance(baseline_stage_details, list):
+            if not isinstance(baseline_stage_details, list) or not baseline_stage_details:
                 continue
             stage_details = self.stage_details_cache.get(stem)
             if not isinstance(stage_details, list):
@@ -4068,6 +4067,14 @@ class EvaluationSession:
             )
 
     def _stage_details_for_stem(self, stem: str) -> list[dict[str, Any]] | None:
+        baseline_entry = _CIRCUIT_BASELINES.get(CircuitCatalog.baseline_key(stem))
+        baseline_stage_details = (
+            baseline_entry.get("two_q_stage_details")
+            if isinstance(baseline_entry, dict)
+            else None
+        )
+        if not isinstance(baseline_stage_details, list) or not baseline_stage_details:
+            return None
         stage_details = self.stage_details_cache.get(stem)
         if isinstance(stage_details, list):
             return stage_details
@@ -4145,15 +4152,16 @@ class EvaluationSession:
         if total_fidelity_neglog is None:
             return None
         non_1q2q_neglog = CircuitScoring.non_1q2q_neglog(core_like)
-        stage_details = self._stage_details_for_stem(stem) or []
+        stage_details = self._stage_details_for_stem(stem)
 
         record: dict[str, Any] = {
             "path": str(full_path),
             "time_us": float(time_us),
             "f_all": float(total_fidelity_neglog),
             "f_non12": float(non_1q2q_neglog if non_1q2q_neglog is not None else total_fidelity_neglog),
-            "two_q_stage_details": StageAnalysis.serialize_for_baseline(stage_details),
         }
+        if stage_details:
+            record["two_q_stage_details"] = StageAnalysis.serialize_for_baseline(stage_details)
 
         time_improvement = self._finite_float_or_none(self.out.get(f"{stem}_time_improvement"))
         fidelity_improvement = self._finite_float_or_none(self.out.get(f"{stem}_fidelity_improvement"))
@@ -4191,14 +4199,11 @@ class EvaluationSession:
             return False
         time_us = self._finite_float_or_none(record.get("time_us"))
         fidelity_neglog = self._finite_float_or_none(record.get("f_all"))
-        stage_details = record.get("two_q_stage_details")
         if best_program_path is None:
             best_program_path = self._nonempty_text_or_none(record.get("best_program_path"))
         if time_us is None or time_us <= 0.0:
             return False
         if fidelity_neglog is None or fidelity_neglog < 0.0:
-            return False
-        if not isinstance(stage_details, list):
             return False
         if best_program_path is None or not BestPerformanceStore.program_path_exists(best_program_path):
             return False
@@ -4686,11 +4691,73 @@ def evaluate(filepath: str | Path) -> dict[str, Any]:
 
 
 def main() -> None:
-    """CLI: evaluate bundled ``alphaevolve.py`` on auto-discovered circuits and print merged dict."""
+    """CLI: evaluate a configurable program on a configurable benchmark set."""
+    global _LIB_CIRCUITS, MIN_QUBIT, MAX_QUBIT, KEEP_PER_CIRCUIT_INFO
+
+    import argparse
     import pprint
 
-    alpha_path = _EVAL_ROOT / "init_program.py"
-    merged = evaluate(alpha_path)
+    parser = argparse.ArgumentParser(
+        description="Evaluate a program on auto-discovered ZNAA benchmark circuits.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+    )
+    parser.add_argument(
+        "--program-path",
+        type=Path,
+        default=_EVAL_ROOT / "init_program.py",
+        help="Program to evaluate; relative paths are resolved from the evaluator directory.",
+    )
+    parser.add_argument(
+        "--min-qubit",
+        type=int,
+        default=MIN_QUBIT,
+        help="Minimum circuit qubit count to include.",
+    )
+    parser.add_argument(
+        "--max-qubit",
+        type=int,
+        default=MAX_QUBIT,
+        help="Maximum circuit qubit count to include.",
+    )
+    parser.add_argument(
+        "--benchmark-folder",
+        type=Path,
+        default=_EVAL_ROOT / "benchmark_evaluation",
+        help="Benchmark directory; relative paths are resolved from the evaluator directory.",
+    )
+    parser.add_argument(
+        "--show-circuit-scores",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="Include per-circuit score details in the printed output.",
+    )
+    args = parser.parse_args()
+
+    if args.min_qubit < 0:
+        parser.error("--min-qubit must be non-negative.")
+    if args.max_qubit < args.min_qubit:
+        parser.error("--max-qubit must be greater than or equal to --min-qubit.")
+
+    benchmark_folder = args.benchmark_folder
+    if not benchmark_folder.is_absolute():
+        benchmark_folder = _EVAL_ROOT / benchmark_folder
+    benchmark_folder = benchmark_folder.resolve()
+    if not benchmark_folder.is_dir():
+        parser.error(f"--benchmark-folder is not a directory: {benchmark_folder}")
+
+    program_path = args.program_path
+    if not program_path.is_absolute():
+        program_path = _EVAL_ROOT / program_path
+    program_path = program_path.resolve()
+    if not program_path.is_file():
+        parser.error(f"--program-path is not a file: {program_path}")
+
+    MIN_QUBIT = args.min_qubit
+    MAX_QUBIT = args.max_qubit
+    _LIB_CIRCUITS = benchmark_folder
+    KEEP_PER_CIRCUIT_INFO = args.show_circuit_scores
+
+    merged = evaluate(program_path)
     pprint.pprint(merged, width=120, sort_dicts=False)
 
 
