@@ -22,7 +22,7 @@
   <img src="assets/simpletes-overview.png" alt="SimpleTES test-time scaling overview" width="900">
 </p>
 
-**SimpleTES** (Simple Test-time Evaluation-driven Scaling) scales the propose → evaluate → refine loop for scientific discovery. It combines parallel exploration, feedback-driven refinement, and local selection. Open-source `gpt-oss` models reach state-of-the-art on 21 problems across six domains, beating both frontier models and tuned optimization pipelines.
+**SimpleTES** (Simple Test-time Evaluation-driven Scaling) scales the propose → evaluate → refine loop for scientific discovery. It combines parallel exploration, feedback-driven refinement, and local selection. A single open-source `gpt-oss` model reaches state-of-the-art results across 28 open-ended problems in five scientific domains, beating both frontier models and tuned optimization pipelines.
 
 ## Updates
 
@@ -30,16 +30,16 @@
 
 ## Highlight Results
 
-| Domain | Highlights | Artifacts |
-|--------|------------|-----------|
-| Quantum circuit compilation | Routing policies beating strong handcrafted baselines on SABRE / QASMBench | [`best_results/quantum_circuit_compilation/`](best_results/quantum_circuit_compilation) |
-| GPU kernel optimization | TriMul, batched cumsum, asymmetric matmul kernels | [`best_results/gpu_kernel_optimization/`](best_results/gpu_kernel_optimization) |
-| Algorithm engineering | LASSO path solver out-performing expert baselines (2× speedup) | [`best_results/algorithm_engineering/`](best_results/algorithm_engineering) |
-| Mathematics — extremal analysis | New Erdős min-overlap & autocorrelation constructions | [`best_results/mathematics_extremal_analysis/`](best_results/mathematics_extremal_analysis) |
-| Combinatorial construction | SOTA sum-difference, circle packing, Hadamard determinant | [`best_results/combinatorial_construction/`](best_results/combinatorial_construction) |
-| Data science | Better scaling laws & single-cell RNA denoising | [`best_results/data_science/`](best_results/data_science) |
+| Domain | Representative problems |
+|--------|-------------------------|
+| Quantum compilation | Superconducting qubit routing and zoned neutral-atom compilation |
+| Astrodynamics | Gravity-assist trajectory design |
+| Scientific algorithms | LASSO path solving, whole-brain forecasting, and single-cell RNA denoising |
+| AI foundations | GPU kernel optimization and scaling-law discovery |
+| Mathematics discovery | Extremal analysis and combinatorial construction |
 
-- Full inventory of all 21 released artifacts: [`best_results/README.md`](best_results/README.md).
+- **Task catalogue and design guide**: [`datasets/README.md`](datasets/README.md).
+- **Released result artifacts**: [`best_results/README.md`](best_results/README.md).
 - **Case studies** — what each task's seed program evolved into, with side-by-side animations: [`assets/case_study/README.md`](assets/case_study/README.md).
 
 ## How It Works
@@ -156,7 +156,7 @@ uv run python main.py --resume checkpoints/<date>/instance-<id>
 
 ## Build Your Own Task
 
-SimpleTES ships with 13 task families across 6 domains. A new task is three files:
+Task implementations are organized by family under [`datasets/`](datasets). A new task is three files:
 
 ```text
 my_family/
@@ -174,7 +174,7 @@ Drop the directory under `datasets/` and `main_wizard.py` picks it up.
 
 Contributions are welcome.
 
-- **New tasks**: follow [`datasets/README.md`](datasets/README.md#how-to-design-your-own-task) and open a PR.
+- **New tasks**: follow [`datasets/README.md`](datasets/README.md#designing-a-task) and open a PR.
 - **Code**: fork, add tests under [`tests/`](tests), run `uv run pytest`, open a PR with a benchmark comparison.
 - **Bugs / features**: [GitHub Issues](https://github.com/wq-will/SimpleTES/issues).
 
@@ -182,7 +182,7 @@ Contributions are welcome.
   [<a href="https://github.com/wq-will/SimpleTES/issues/new?labels=bug">Report a Bug</a>]
   | [<a href="https://github.com/wq-will/SimpleTES/issues/new?labels=enhancement">Suggest a Feature</a>]
   | [<a href="https://github.com/wq-will/SimpleTES/pulls">Open a PR</a>]
-  | [<a href="datasets/README.md#how-to-design-your-own-task">Add a Task</a>]
+  | [<a href="datasets/README.md#designing-a-task">Add a Task</a>]
 </p>
 
 ## Troubleshooting

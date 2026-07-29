@@ -25,4 +25,4 @@ python main.py \
   --model <your-model>
 ```
 
-Score is total added CNOT count across the benchmark circuits averaged over three topologies; the evaluator reports per-circuit counts and validation results in the metrics dict.
+The evaluator scores total added CNOT-equivalent overhead across the benchmark circuits averaged over three topologies, using three CNOTs per inserted SWAP. The paper reports the corresponding added-SWAP counts (the CNOT-equivalent totals divided by three); the metrics dictionary retains both the raw SWAP counts and CNOT-equivalent aggregates.

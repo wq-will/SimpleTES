@@ -1,57 +1,63 @@
 # Best-known solutions
 
-The highest-scoring program SimpleTES discovered on each task in the paper — 21 tasks organized by the six domains of §3 of the paper. One subdirectory per task, each containing the evolved program (`*_best.py`, `*_best.cpp`, or `*_best.rs`) and, where applicable, the concrete evaluated artifact (`*_best_construction.json`).
+Result artifacts are organized by the five scientific domains used in the paper. Each benchmark problem has one subdirectory for its evolved program (`*_best.py`, `*_best.cpp`, or `*_best.rs`) and, where applicable, its concrete evaluated artifact (`*_best_construction.json`).
 
-## Quantum Circuit Compilation
-
-| Task | What it is |
-|---|---|
-| `quantum_circuit_compilation/qubit_routing_on_superconducting_quantum_computer/` | Routing policy for two-qubit gates on a superconducting chip, minimizing added SWAPs (Rust) |
-| `quantum_circuit_compilation/compilation_for_zoned_neutral_atom_quantum_architectures/` | Gate scheduling for a zoned neutral-atom quantum architecture, minimizing total stage count |
-
-## GPU Kernel Optimization
+## Quantum Compilation
 
 | Task | What it is |
 |---|---|
-| `gpu_kernel_optimization/trimul/` | CUDA kernel for triangular matrix multiplication (H100, ms) |
-| `gpu_kernel_optimization/batched_cumsum/` | CUDA kernel for batched prefix-sum (H100, ms) |
-| `gpu_kernel_optimization/asymmetric_matrix_multiplication/` | CUDA kernel for asymmetric matmul |
+| `quantum_compilation/qubit_routing_on_superconducting_quantum_computer/` | Routing policy for two-qubit gates on a superconducting chip, minimizing added SWAPs (Rust) |
+| `quantum_compilation/compilation_for_zoned_neutral_atom_quantum_architectures/` | Compilation policy for a zoned neutral-atom architecture; the paper reports geometric-mean execution time |
 
-## Algorithm Engineering
-
-| Task | What it is |
-|---|---|
-| `algorithm_engineering/lasso_regularization_path/` | LASSO solver along a full regularization path (ms) |
-| `algorithm_engineering/ahc039_purse_seine_fishing/` | AtCoder Heuristic Contest 039 (Purse Seine Fishing), C++ |
-| `algorithm_engineering/ahc058_apple_production_planning/` | AtCoder Heuristic Contest 058 (Apple Production Planning), C++ |
-
-## Mathematics Extremal Analysis
+## Astrodynamics
 
 | Task | What it is |
 |---|---|
-| `mathematics_extremal_analysis/erdos_minimum_overlap/` | Erdős minimum overlap problem — constructions minimizing the overlap statistic |
-| `mathematics_extremal_analysis/first_autocorrelation_inequality/` | First autocorrelation inequality — functions minimizing the self-convolution ratio |
-| `mathematics_extremal_analysis/second_autocorrelation_inequality/` | Second autocorrelation inequality |
-| `mathematics_extremal_analysis/third_autocorrelation_inequality/` | Third autocorrelation inequality |
+| `astrodynamics/mariner_10/` | Gravity-assist trajectory design for Mariner 10 |
+| `astrodynamics/voyager_2/` | Gravity-assist trajectory design for Voyager 2 |
+| `astrodynamics/galileo/` | Gravity-assist trajectory design for Galileo |
+| `astrodynamics/cassini/` | Gravity-assist trajectory design for Cassini |
+| `astrodynamics/rosetta/` | Gravity-assist trajectory design for Rosetta |
 
-## Combinatorial Construction
-
-| Task | What it is |
-|---|---|
-| `combinatorial_construction/sum_difference_problem/` | Sum-difference set constructions maximizing $\|A+A\| / \|A-A\|$ |
-| `combinatorial_construction/circle_packing_in_a_unit_square_n26/` | 26 non-overlapping circles packed in a unit square, maximizing the minimum radius |
-| `combinatorial_construction/circle_packing_in_a_unit_square_n32/` | Same task at $N = 32$ |
-| `combinatorial_construction/hadamard_maximum_determinant_order_29/` | $\pm 1$ matrix of order 29 maximizing $\|\det\|$ |
-
-## Data Science
+## Scientific Algorithms
 
 | Task | What it is |
 |---|---|
-| `data_science/parallel_scaling_law/` | Symbolic scaling-law extrapolation on the `parallel` split |
-| `data_science/domain_mixture_scaling_law/` | Scaling law on the `domain_mixture` split |
-| `data_science/learning_rate_and_batch_size_scaling_law/` | Scaling law on the `lr & bsz` split |
-| `data_science/easy_question_u_shaped_scaling_law/` | Scaling law on the `u_shape` split |
-| `data_science/single_cell_rna_seq_denoising/` | Single-cell RNA-seq denoising policy, evaluated with the OpenProblems benchmark |
+| `scientific_algorithms/lasso_regularization_path/` | LASSO solver along a full regularization path (ms) |
+| `scientific_algorithms/zapbench_forecasting_h1/` | Whole-brain activity forecasting at horizon 1 |
+| `scientific_algorithms/zapbench_forecasting_h4/` | Whole-brain activity forecasting at horizon 4 |
+| `scientific_algorithms/zapbench_forecasting_h8/` | Whole-brain activity forecasting at horizon 8 |
+| `scientific_algorithms/zapbench_forecasting_h16/` | Whole-brain activity forecasting at horizon 16 |
+| `scientific_algorithms/zapbench_forecasting_h32/` | Whole-brain activity forecasting at horizon 32 |
+| `scientific_algorithms/single_cell_rna_seq_denoising/` | Single-cell RNA-seq denoising policy, evaluated with the OpenProblems benchmark |
+
+Additional released artifacts: [`scientific_algorithms/ahc039_purse_seine_fishing/`](scientific_algorithms/ahc039_purse_seine_fishing/) and [`scientific_algorithms/ahc058_apple_production_planning/`](scientific_algorithms/ahc058_apple_production_planning/).
+
+## AI Foundations
+
+| Task | What it is |
+|---|---|
+| `ai_foundations/trimul/` | Triton kernel for triangular matrix multiplication (headline result on H100, ms) |
+| `ai_foundations/asymmetric_matrix_multiplication/` | Triton kernel for asymmetric matmul (H200, ms) |
+| `ai_foundations/batched_cumsum/` | Triton kernel for batched prefix-sum (H200, ms) |
+| `ai_foundations/parallel_scaling_law/` | Symbolic scaling-law extrapolation on the `parallel` split |
+| `ai_foundations/domain_mixture_scaling_law/` | Scaling law on the `domain_mixture` split |
+| `ai_foundations/learning_rate_and_batch_size_scaling_law/` | Scaling law on the `lr & bsz` split |
+| `ai_foundations/easy_question_u_shaped_scaling_law/` | Scaling law on the `u_shape` split |
+
+## Mathematics Discovery
+
+| Task | What it is |
+|---|---|
+| `mathematics_discovery/erdos_minimum_overlap/` | Erdős minimum overlap problem — constructions minimizing the overlap statistic |
+| `mathematics_discovery/second_autocorrelation_inequality/` | Second autocorrelation inequality |
+| `mathematics_discovery/third_autocorrelation_inequality/` | Third autocorrelation inequality |
+| `mathematics_discovery/sum_difference_problem/` | Sum-difference set constructions maximizing $|A+A| / |A-A|$ |
+| `mathematics_discovery/circle_packing_in_a_unit_square_n26/` | 26 non-overlapping circles packed in a unit square, maximizing the sum of radii |
+| `mathematics_discovery/circle_packing_in_a_unit_square_n32/` | Same task at $N = 32$ |
+| `mathematics_discovery/hadamard_maximum_determinant_order_29/` | $\pm 1$ matrix of order 29 maximizing $|\det|$ |
+
+Additional released artifact: [`mathematics_discovery/first_autocorrelation_inequality/`](mathematics_discovery/first_autocorrelation_inequality/).
 
 ## File conventions
 

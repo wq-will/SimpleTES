@@ -18,7 +18,7 @@ Pack `n` non-overlapping circles in the unit square to maximise the sum of radii
 
 - **Seed**: uniform grid of equal-radius circles, then shrinks each radius to the minimum centre-to-centre distance.
 - **Evolved**: LP feasibility check over a pre-computed pair-constraint matrix, then `scipy.optimize.differential_evolution` over the placement, with `cvxpy` polishing radii at each candidate.
-- **Result**: matches or exceeds public baselines on both n. Side-by-side plot in [`best_results/combinatorial_construction/circle_packing_in_a_unit_square_n26/`](../../best_results/combinatorial_construction/circle_packing_in_a_unit_square_n26).
+- **Result**: matches or exceeds public baselines on both n. Side-by-side plot in [`best_results/mathematics_discovery/circle_packing_in_a_unit_square_n26/`](../../best_results/mathematics_discovery/circle_packing_in_a_unit_square_n26).
 
 ---
 
@@ -50,7 +50,7 @@ Find a step function `h: [0, 2] → [0, 1]` with `∑h = n/2` that minimises `Ψ
 
 - **Seed**: `h ≡ 0.5` plus zero-mean random noise in `[-0.4, 0.4]`.
 - **Evolved**: seven-stage pipeline — warm-start from Paley, stochastic donor-receiver swaps, Adam on a smooth-max surrogate, guided swaps at the worst shift, binary rounding, binary best-swap, simulated annealing.
-- **Result**: `Ψ(h) = 0.3808676758`.
+- **Result**: `Ψ(h) = 0.380868`.
 
 ---
 
@@ -59,14 +59,14 @@ Find a step function `h: [0, 2] → [0, 1]` with `∑h = n/2` that minimises `Ψ
 Domain: algorithm engineering. Task family: [`numerical_tasks`](../../datasets/numerical_tasks).
 
 <p align="center">
-  <img src="lasso_path.gif" alt="LASSO regularisation path — 2.07× faster than glmnet" width="720">
+  <img src="lasso_path.gif" alt="LASSO regularisation path — 2.17× faster than glmnet" width="720">
 </p>
 
 Solve the full path `min ½n·‖y − Xw‖² + λ·‖w‖₁` over a decreasing λ schedule, matching `sklearn.lasso_path` within `1e-6` in float64. Score is `1 / geomean(wall_time)`.
 
 - **Seed**: textbook C++ coordinate descent with `Eigen`. Single soft-threshold, naïve outer loop, no parallelism.
 - **Evolved**: tuned CD with OpenMP, hot/cold variable partitioning across the λ schedule, cache-resident residual updates.
-- **Result**: **2.07× faster than `glmnet`** at matched precision.
+- **Result**: **2.17× faster than `glmnet`** at matched precision.
 
 ---
 
@@ -75,14 +75,14 @@ Solve the full path `min ½n·‖y − Xw‖² + λ·‖w‖₁` over a decreasi
 Domain: GPU kernel optimization. Task family: [`gpumode`](../../datasets/gpumode).
 
 <p align="center">
-  <img src="trimul.gif" alt="TriMul kernel optimisation — 8.3 ms to 1.02 ms" width="900">
+  <img src="trimul.gif" alt="TriMul kernel optimisation across H100 and H200" width="900">
 </p>
 
-Implement the TriMul block (triangular matmul with gating and layernorm) matching the PyTorch reference within `2e-2`, minimising H100 latency.
+Implement the TriMul block (triangular matmul with gating and layernorm) matching the PyTorch reference within `2e-2`. The kernel is discovered on H200 and evaluated without re-tuning on H100 and other accelerators.
 
 - **Seed**: `torch.nn` with `einsum` and `nn.Linear`. Reference semantics, no GPU tuning.
 - **Evolved**: hand-written Triton in four stages — FP16 compute / FP32 accumulate, concat-weight single GEMM, fused layernorm + gate + projection, full autotune with adaptive `num_warps`.
-- **Result**: **8.309 ms → 1.020 ms** on H100 (~8×).
+- **Result**: **1.122 ms on H100** and **1.020 ms on H200**.
 
 ---
 
@@ -102,4 +102,4 @@ Given a sparse UMI count matrix `X_train` (cells × genes), produce a denoised `
 
 ---
 
-Each evolved program is in [`best_results/<domain>/<task>_best.py`](../../best_results). Each seed is in [`datasets/<family>/<subtask>/init_program.py`](../../datasets). To reproduce, run `main.py` on the same seed — see the [top-level Quickstart](../../README.md#installation--quickstart).
+Each evolved program is in [`best_results/<domain>/<task>/<task>_best.py`](../../best_results). Each seed is in [`datasets/<family>/<subtask>/init_program.py`](../../datasets). To reproduce, run `main.py` on the same seed — see the [top-level Quickstart](../../README.md#installation--quickstart).

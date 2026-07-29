@@ -1,6 +1,6 @@
 # SimpleTES Tasks
 
-21 tasks across 6 domains, aligned with the artifacts in [`best_results/`](../best_results). The launcher auto-discovers anything at `datasets/<family>/<subtask>/init_program.{py,cpp,rs,...}`.
+Task packages are organized by implementation family and aligned with [`best_results/`](../best_results). The launcher auto-discovers anything at `datasets/<family>/<subtask>/init_program.{py,cpp,rs,...}`.
 
 - [Catalogue](#catalogue) — what's here
 - [Designing a task](#designing-a-task) — the file contract + worked example
@@ -12,7 +12,7 @@
 <table>
 <thead>
 <tr>
-  <th align="left">Domain</th>
+  <th align="left">Task area</th>
   <th align="left">Family</th>
   <th align="center">Subtasks</th>
   <th align="center">Language</th>
