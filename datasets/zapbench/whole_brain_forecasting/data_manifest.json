@@ -1,0 +1,22 @@
+{
+  "prepare_commands": [
+    {
+      "command": ["bash", "setup.sh"],
+      "cwd": ".",
+      "description": "Create .venv and install jax/torch/zapbench for ZAPBench forecasting"
+    },
+    {
+      "command": ["python", "prepare_data.py"],
+      "cwd": ".",
+      "venv": ".venv",
+      "description": "Stream + cache ZAPBench train + val arrays from gs://zapbench-release"
+    }
+  ],
+  "required_files": [
+    "zapbench_cache/X_train.npy",
+    "zapbench_cache/X_train_condition_lengths.npy",
+    "zapbench_cache/val_predict_inputs.npy",
+    "zapbench_cache/val_targets.npy",
+    "zapbench_cache/mean_baseline_mae_val.json"
+  ]
+}
