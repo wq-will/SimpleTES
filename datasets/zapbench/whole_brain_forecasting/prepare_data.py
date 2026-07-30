@@ -18,7 +18,7 @@ def _import_zapbench():
     except ImportError as e:
         sys.stderr.write(
             "ERROR: ZAPBench import failed. Activate the venv created by "
-            "datasets/zapbench/setup.sh first.\n"
+            "datasets/zapbench/whole_brain_forecasting/setup.sh first.\n"
             f"Underlying error: {e}\n"
         )
         sys.exit(2)

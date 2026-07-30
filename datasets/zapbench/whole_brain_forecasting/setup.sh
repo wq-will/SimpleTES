@@ -8,7 +8,7 @@ cd "$SCRIPT_DIR"
 
 VENV_DIR="$SCRIPT_DIR/.venv"
 
-REPO_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 ZAPBENCH_SRC="$REPO_ROOT/third_party/zapbench"
 
 if [ ! -d "$ZAPBENCH_SRC" ]; then
