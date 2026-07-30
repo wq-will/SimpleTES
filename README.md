@@ -53,6 +53,10 @@ A fixed evaluator budget is spent across four levers:
 | **`K`** | `--k-candidates` | Local best-of-`K` — avoid committing weak candidates |
 | **`Φ`** | `--selector` | History-to-prompt policy — what past evidence shapes the next attempt |
 
+> ### Recommended configuration
+>
+> **Use a stronger model with smaller `C`, `L`, and `K` to reach good results faster.**
+
 Each trajectory keeps a history of `(candidate, score, metadata)`. One step: select history, build prompt, ask for `K` candidates, evaluate in isolated subprocesses, commit the best.
 
 **Available selectors** (`uv run python main.py --list-policies`):
@@ -67,7 +71,15 @@ Each trajectory keeps a history of `(candidate, score, metadata)`. One step: sel
 
 ## Quickstart
 
-Python ≥ 3.11. Install with `uv`:
+Configure the model API before launching a run. Set credentials for any [LiteLLM-supported](https://docs.litellm.ai/docs/providers) provider:
+
+```bash
+export GEMINI_API_KEY=...      # or OPENAI_API_KEY / ANTHROPIC_API_KEY / ...
+```
+
+For a custom endpoint, enter the API base when running `main_wizard.py` or pass `--api-base` to the CLI. Prefer environment variables for API keys so secrets do not end up in shell history or committed configuration.
+
+Then install Python ≥ 3.11 dependencies with `uv`:
 
 ```bash
 uv sync
@@ -75,12 +87,6 @@ uv sync --extra vllm        # optional: vLLM token-forcing backend
 ```
 
 Or `pip install -e .`.
-
-Set credentials for any [LiteLLM-supported](https://docs.litellm.ai/docs/providers) provider:
-
-```bash
-export GEMINI_API_KEY=...      # or OPENAI_API_KEY / ANTHROPIC_API_KEY / ...
-```
 
 Interactive launcher (discovers tasks, prompts for model / budget / selector, prints or runs the command):
 
