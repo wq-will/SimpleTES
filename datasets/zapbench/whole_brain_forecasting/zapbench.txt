@@ -1,0 +1,135 @@
+You are an expert in time-series forecasting and computational neuroscience.
+Your task is to forecast cellular-resolution neural activity in a larval
+zebrafish brain. The recording was made with light-sheet fluorescence
+microscopy across nine visual-stimulus conditions, producing per-neuron
+activity traces for 71,721 neurons over 7,879 time steps.
+
+## Problem
+
+Given the past 4 time steps of activity for every neuron, predict the next
+32 time steps for every neuron. This is multi-variate forecasting at
+cellular resolution: 71,721 univariate series predicted jointly.
+
+## Data Format
+
+You receive three numpy arrays:
+
+- **`X_train`**: shape `(T_train, 71721)`, dtype float32. Concatenated
+  training-split slices from the 8 training conditions (in
+  `CONDITIONS_TRAIN` order: 0, 1, 2, 4, 5, 6, 7, 8). Use this however you
+  like — train a model, fit per-neuron statistics, build embeddings, etc.
+- **`X_train_condition_lengths`**: shape `(8,)`, dtype int32. Length of each
+  condition's training-split slice along the time axis. Concatenated in
+  the same order as `X_train`. Useful if you want per-condition modeling.
+- **`predict_inputs`**: shape `(n_windows, 4, 71721)`, dtype float32. Each
+  row is a 4-timestep input window from the validation split, taken at
+  stride 1 within each training condition's val region. These are the
+  inputs you must forecast forward.
+
+Your output:
+
+- **`Y_pred`**: shape `(n_windows, 32, 71721)`, dtype float32. For each
+  input window, predict the next 32 time steps for every neuron.
+
+## Function Signature
+
+```python
+def forecast(X_train, predict_inputs, X_train_condition_lengths=None, **kwargs):
+    # kwargs may include: random_state, time_budget_s, num_train_conditions=8
+    # Return Y_pred of shape (predict_inputs.shape[0], 32, 71721), dtype float32.
+    ...
+    return Y_pred
+```
+
+## Evaluation
+
+For each window, we compute mean absolute error between your `Y_pred` and
+the ground-truth next 32 time steps (held out, never given to your code):
+
+```python
+def mae(Y_pred, Y_true):
+    return float(np.mean(np.abs(Y_pred.astype(np.float64) - Y_true.astype(np.float64))))
+```
+
+We average MAE across windows, horizon steps, and neurons.
+
+## Scoring
+
+The search engine ranks solutions by **negated MAE**:
+
+```
+combined_score = -MAE_your_model
+```
+
+Higher is better (lower MAE → higher `combined_score`). Typical scale:
+serious models on this task score roughly in the range `-0.035` to `-0.025`.
+
+If your prediction has any non-finite values, the wrong shape, or the
+function raises, `combined_score` is set to a fixed failure sentinel
+(`-10.0`) — well below any plausible real score, so the search engine
+ranks failed candidates strictly below valid ones.
+
+## Budget & Resources
+
+- **Time budget**: 14,400 seconds (4 hours) total for `forecast(...)` to
+  return, including any model training inside the call.
+- **GPU**: 1 NVIDIA RTX A4000 (16 GB VRAM) per candidate. Keep peak GPU
+  memory under ~16 GB. Visible as CUDA device 0 inside the sandbox.
+- **CPUs**: 8 threads. Memory: bounded; do not load the full GCS dataset
+  in addition to what you receive.
+- **No network I/O** from inside the sandbox. All data you need is in the
+  three input arrays.
+
+## Example libraries
+
+- numpy, scipy, scikit-learn, pandas
+- jax, flax, optax (the ZAPBench-native stack)
+- torch (CUDA-enabled; cuDNN available)
+- einops, tqdm
+
+## Common pitfalls (these crash the evaluation — avoid them)
+
+- **Shapes**: return exactly `(predict_inputs.shape[0], 32, 71721)`. Build
+  training windows *within* each condition (never let a window cross a
+  boundary in `X_train_condition_lengths`) — mismatched lengths are the
+  single most common crash.
+- **dtype**: keep tensors in one dtype per op; mixing float32 and float64 in
+  a matmul (`mat1 and mat2 must have the same dtype`) is a frequent failure.
+- **GPU memory**: a single 16 GB A4000. Keep models + intermediates within
+  it; free large tensors and avoid materializing `(n_windows, 32, 71721)`
+  more than once.
+- Always return finite values (no NaN/Inf).
+
+## Key context
+
+- The data are pre-normalized activity traces in roughly `[-0.25, 1.5]`.
+- The 9 conditions correspond to different visual stimuli (gain, dots,
+  flash, taxis, turning, position, open-loop, rotation, dark). Condition
+  identity is implicit in `X_train_condition_lengths`; condition 3
+  (`taxis`) is NOT in the training set (it is the cross-condition holdout
+  reserved for final-score reporting, not inner-loop search).
+- Strong published methods on this benchmark exploit (a) cross-neuron
+  structure (the 71,721 neurons are not independent), (b) condition-
+  specific dynamics, (c) a global brain-state vector summarising the
+  current 4-step window, and (d) weight sharing across neurons.
+- To win this competition, you should explore distinct architectural ideas. Do not limit yourself to simple MLPs.
+
+## Output structure
+
+```python
+# EVOLVE-BLOCK-START
+# <your imports here>
+# <your helper functions / model classes here>
+
+def forecast(X_train, predict_inputs, X_train_condition_lengths=None, **kwargs):
+    # Your improved forecaster
+    return Y_pred
+
+# EVOLVE-BLOCK-END
+```
+
+- ONLY modify code between `# EVOLVE-BLOCK-START` and `# EVOLVE-BLOCK-END`.
+- Top-level imports and helpers are allowed inside the block.
+- No closures, lambdas at module level, no global mutable state outside
+  the EVOLVE-BLOCK.
+- No filesystem or network IO.
