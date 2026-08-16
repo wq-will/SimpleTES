@@ -26,7 +26,12 @@ planet_id:
   "0" = state reference or DSM.
   "1"-"8" = Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune.
 
-Units: time in MJD (UTC), r in km, v in km/s. Times must be strictly increasing.
+Units: time in MJD, r in km, v in km/s. Planet-bound epochs passed to
+tools.ephem are interpreted as UTC. This instance's fixed 67P endpoint is the
+state at exact MJD 56875.3791666669 (2014-08-06 09:06 TDB), as declared by
+end.time.scale in instance.json; the evaluator compares that stored state
+directly rather than querying a planetary ephemeris. Times must be strictly
+increasing by their reported MJD values.
 
 Pre-defined bindings, do not define them yourself:
 
@@ -70,7 +75,8 @@ Boundary specification:
      "breakpoints": [[vinf, dv], ...]}
 
     dv = piecewise_linear_interpolation(|v_after - v_before|, breakpoints)
-    If planet_id == "0": time must be exact and state_r/state_v must be provided.
+    If planet_id == "0": time must be exact, its scale is declared in the
+    boundary specification, and state_r/state_v must be provided.
 
 tools = Tools(), with these primitives:
     r, v = tools.ephem(planet_id, mjd_utc)

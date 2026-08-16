@@ -14,6 +14,12 @@ only repository layout and import wiring have been adapted for SimpleTES.
 | `cassini` | Cassini | 20 | 0.820129158750 |
 | `rosetta` | Rosetta | 30.25 | 1.552967656327 |
 
+Planetary ephemeris queries use MJD (UTC).  Rosetta is the one fixed-state
+exception: its 67P endpoint is the stored Horizons state at exact MJD
+56875.3791666669 (2014-08-06 09:06 TDB), explicitly marked with
+`"scale": "TDB"` in `rosetta/instance.json`.  The evaluator compares that
+stored state directly and does not reinterpret it as a UTC planetary query.
+
 ## Layout
 
 ```text
