@@ -1,6 +1,6 @@
 # Best-known solutions
 
-Result artifacts are organized by the five scientific domains used in the paper. Each benchmark problem has one subdirectory for its evolved program (`*_best.py`, `*_best.cpp`, or `*_best.rs`) and, where applicable, its concrete evaluated artifact (`*_best_construction.json`).
+Result artifacts are organized by the five scientific domains used in the paper. Each benchmark problem has one subdirectory for its evolved program (usually `*_best.py`, `*_best.cpp`, or `*_best.rs`) and, where applicable, its concrete evaluated artifact (`*_best_construction.json`). The ZAPBench releases retain the filename `best_program.py`.
 
 ## Quantum Compilation
 
@@ -13,22 +13,22 @@ Result artifacts are organized by the five scientific domains used in the paper.
 
 | Task | What it is |
 |---|---|
-| `astrodynamics/mariner_10/` | Gravity-assist trajectory design for Mariner 10 |
-| `astrodynamics/voyager_2/` | Gravity-assist trajectory design for Voyager 2 |
-| `astrodynamics/galileo/` | Gravity-assist trajectory design for Galileo |
-| `astrodynamics/cassini/` | Gravity-assist trajectory design for Cassini |
-| `astrodynamics/rosetta/` | Gravity-assist trajectory design for Rosetta |
+| [`astrodynamics/mariner_10/`](astrodynamics/mariner_10/) | Gravity-assist trajectory design for Mariner 10 |
+| [`astrodynamics/voyager_2/`](astrodynamics/voyager_2/) | Gravity-assist trajectory design for Voyager 2 |
+| [`astrodynamics/galileo/`](astrodynamics/galileo/) | Gravity-assist trajectory design for Galileo |
+| [`astrodynamics/cassini/`](astrodynamics/cassini/) | Gravity-assist trajectory design for Cassini |
+| [`astrodynamics/rosetta/`](astrodynamics/rosetta/) | Gravity-assist trajectory design for Rosetta |
 
 ## Scientific Algorithms
 
 | Task | What it is |
 |---|---|
 | `scientific_algorithms/lasso_regularization_path/` | LASSO solver along a full regularization path (ms) |
-| `scientific_algorithms/zapbench_forecasting_h1/` | Whole-brain activity forecasting at horizon 1 |
-| `scientific_algorithms/zapbench_forecasting_h4/` | Whole-brain activity forecasting at horizon 4 |
-| `scientific_algorithms/zapbench_forecasting_h8/` | Whole-brain activity forecasting at horizon 8 |
-| `scientific_algorithms/zapbench_forecasting_h16/` | Whole-brain activity forecasting at horizon 16 |
-| `scientific_algorithms/zapbench_forecasting_h32/` | Whole-brain activity forecasting at horizon 32 |
+| [`scientific_algorithms/zapbench_forecasting_h1/`](scientific_algorithms/zapbench_forecasting_h1/) | Whole-brain activity forecasting at horizon 1 |
+| [`scientific_algorithms/zapbench_forecasting_h4/`](scientific_algorithms/zapbench_forecasting_h4/) | Whole-brain activity forecasting at horizon 4 |
+| [`scientific_algorithms/zapbench_forecasting_h8/`](scientific_algorithms/zapbench_forecasting_h8/) | Whole-brain activity forecasting at horizon 8 |
+| [`scientific_algorithms/zapbench_forecasting_h16/`](scientific_algorithms/zapbench_forecasting_h16/) | Whole-brain activity forecasting at horizon 16 |
+| [`scientific_algorithms/zapbench_forecasting_h32/`](scientific_algorithms/zapbench_forecasting_h32/) | Whole-brain activity forecasting at horizon 32 |
 | `scientific_algorithms/single_cell_rna_seq_denoising/` | Single-cell RNA-seq denoising policy, evaluated with the OpenProblems benchmark |
 
 Additional released artifacts: [`scientific_algorithms/ahc039_purse_seine_fishing/`](scientific_algorithms/ahc039_purse_seine_fishing/) and [`scientific_algorithms/ahc058_apple_production_planning/`](scientific_algorithms/ahc058_apple_production_planning/).
@@ -64,6 +64,7 @@ Additional released artifact: [`mathematics_discovery/first_autocorrelation_ineq
 | File | What it is |
 |---|---|
 | `<task>_best.py` | Evolved Python program (most tasks) |
+| `best_program.py` | Evolved Python program (ZAPBench result artifacts) |
 | `<task>_best.cpp` | Evolved C++ program (AHC tasks) |
 | `<task>_best.rs` | Evolved Rust program (qubit routing) |
 | `<task>_best_construction.json` | Concrete construction the program was evaluated on, stored as tagged JSON (numpy arrays round-trip via `simpletes.construction.decode_construction`) |

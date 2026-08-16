@@ -1,0 +1,31 @@
+{
+    "id": "rosetta_67p_rendezvous",
+    "mission_name": "Rosetta 67P rendezvous transfer",
+    "description": "Design a Rosetta-like Earth-to-comet trajectory using Earth and Mars gravity assists, ending with low relative velocity at comet 67P/Churyumov-Gerasimenko.",
+    "category": "historical_inspired",
+    "mission_class": "historical_inspired_small_body_rendezvous",
+    "reference_family": "Rosetta EEMEE 67P rendezvous",
+    "design_goal": "Match the heliocentric state of comet 67P after Earth and Mars gravity assists, rather than merely flying by at high speed.",
+    "start": {
+        "type": "piecewise_linear",
+        "planet_id": "3",
+        "time": {"kind": "window", "lo": 52966.0, "hi": 53166.0},
+        "breakpoints": [[0, 0], [5.5, 0], [15.5, 10.0]]
+    },
+    "end": {
+        "type": "piecewise_linear",
+        "planet_id": "0",
+        "time": {"kind": "exact", "value": 56875.3791666669},
+        "state_r": [185144048.789681, -438016487.9104947, -252361615.0569307],
+        "state_v": [7.655449310529605, 12.1143548617743, 5.612458233466272],
+        "breakpoints": [[0, 0], [0.01, 0], [5.01, 5.0]]
+    },
+    "allowed_GA_planets": ["3", "4"],
+    "flyby": {"min_altitude_km": {"3": 300, "4": 300}},
+    "max_nodes": 16,
+    "max_GA": 6,
+    "max_DSM": 6,
+    "target_dv": 1.0,
+    "timeout_seconds": 300,
+    "ephemeris_source": "NASA/JPL Horizons API, target 67P record 90000701, center Sun 500@10, ICRF, geometric vector, 2014-Aug-06 09:06 TDB"
+}

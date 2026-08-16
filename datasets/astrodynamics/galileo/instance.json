@@ -1,0 +1,26 @@
+{
+    "id": "galileo_veega_jupiter",
+    "mission_name": "Galileo VEEGA Jupiter transfer",
+    "description": "Design a Galileo-like Earth-to-Jupiter trajectory using Venus and repeated Earth gravity assists.",
+    "category": "historical_inspired",
+    "mission_class": "historical_inspired_multi_ga",
+    "reference_family": "Galileo VEEGA",
+    "design_goal": "Find a low-delta-v Venus-Earth-Earth gravity-assist transfer from Earth departure to Jupiter arrival.",
+    "start": {
+        "type": "piecewise_linear",
+        "planet_id": "3",
+        "time": {"kind": "window", "lo": 47717.0, "hi": 47917.0},
+        "breakpoints": [[0, 0], [4.472135955, 0], [14.472135955, 10.0]]
+    },
+    "end": {
+        "type": "periapsis_maneuver",
+        "planet_id": "5",
+        "time": {"kind": "window", "lo": 49758.0, "hi": 50358.0},
+        "h_factor": 2.8, "T_days": 210
+    },
+    "allowed_GA_planets": ["2", "3"],
+    "flyby": {"min_altitude_km": {"2": 200, "3": 200}},
+    "max_nodes": 12, "max_GA": 5, "max_DSM": 5,
+    "target_dv": 0.9,
+    "timeout_seconds": 300
+}
