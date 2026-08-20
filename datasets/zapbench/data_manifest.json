@@ -1,0 +1,22 @@
+{
+  "prepare_commands": [
+    {
+      "command": ["bash", "setup.sh"],
+      "cwd": "whole_brain_forecasting",
+      "description": "Create .venv and install jax/torch/zapbench for ZAPBench forecasting"
+    },
+    {
+      "command": ["python", "prepare_data.py"],
+      "cwd": "whole_brain_forecasting",
+      "venv": "whole_brain_forecasting/.venv",
+      "description": "Stream + cache ZAPBench train + val arrays from gs://zapbench-release"
+    }
+  ],
+  "required_files": [
+    "whole_brain_forecasting/zapbench_cache/X_train.npy",
+    "whole_brain_forecasting/zapbench_cache/X_train_condition_lengths.npy",
+    "whole_brain_forecasting/zapbench_cache/val_predict_inputs.npy",
+    "whole_brain_forecasting/zapbench_cache/val_targets.npy",
+    "whole_brain_forecasting/zapbench_cache/mean_baseline_mae_val.json"
+  ]
+}

@@ -1,0 +1,4 @@
+numpy>=2.0
+scipy>=1.13
+numba>=0.60
+spiceypy>=6.0

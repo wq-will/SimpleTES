@@ -1,0 +1,14 @@
+{
+  "prepare_commands": [
+    {
+      "command": ["python", "download_ephemerides.py"],
+      "cwd": ".",
+      "description": "Download and SHA-256 verify the DE430 and NAIF leap-second kernels"
+    }
+  ],
+  "required_files": [
+    "data/ephemerides/de430.bsp",
+    "data/ephemerides/naif0012.tls",
+    "data/ephemerides/.verified"
+  ]
+}

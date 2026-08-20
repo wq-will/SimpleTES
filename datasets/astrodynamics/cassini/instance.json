@@ -1,0 +1,26 @@
+{
+    "id": "cassini_vvejga_saturn",
+    "mission_name": "Cassini VVEJGA Saturn transfer",
+    "description": "Design a Cassini-like Earth-to-Saturn trajectory using Venus, Earth, and Jupiter gravity assists.",
+    "category": "historical_inspired",
+    "mission_class": "historical_inspired_multi_ga",
+    "reference_family": "Cassini VVEJGA",
+    "design_goal": "Use inner-planet and Jupiter gravity assists, with DSMs if useful, to reach Saturn with low capture cost.",
+    "start": {
+        "type": "piecewise_linear",
+        "planet_id": "3",
+        "time": {"kind": "window", "lo": 50536.0, "hi": 50936.0},
+        "breakpoints": [[0, 0], [4.472135955, 0], [14.472135955, 10.0]]
+    },
+    "end": {
+        "type": "periapsis_maneuver",
+        "planet_id": "6",
+        "time": {"kind": "window", "lo": 52787.0, "hi": 53587.0},
+        "h_factor": 0.33, "T_days": 115
+    },
+    "allowed_GA_planets": ["2", "3", "4", "5"],
+    "flyby": {"min_altitude_km": {"2": 200, "3": 200, "4": 200, "5": 14000}},
+    "max_nodes": 16, "max_GA": 6, "max_DSM": 6,
+    "target_dv": 1.0,
+    "timeout_seconds": 300
+}

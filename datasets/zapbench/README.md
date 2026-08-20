@@ -1,6 +1,6 @@
 # ZAPBench Whole-Brain Forecasting
 
-Predict the next 32/16/8/4/1 whole-brain activity frames from a 4-frame context. The evaluator scores predictions by negative mean absolute error, so higher is better.
+The released task package predicts the next 32 whole-brain activity frames from a 4-frame context. The evaluator scores predictions by negative mean absolute error, so higher is better. Independently evolved result artifacts are also available for horizons [1](../../best_results/scientific_algorithms/zapbench_forecasting_h1), [4](../../best_results/scientific_algorithms/zapbench_forecasting_h4), [8](../../best_results/scientific_algorithms/zapbench_forecasting_h8), [16](../../best_results/scientific_algorithms/zapbench_forecasting_h16), and [32](../../best_results/scientific_algorithms/zapbench_forecasting_h32).
 
 ## Setup
 

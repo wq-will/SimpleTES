@@ -29,6 +29,11 @@ Task packages are organized by implementation family and aligned with [`best_res
     <td align="center">1</td><td align="center">Python</td>
     <td align="center"><sub>family venv</sub></td></tr>
 
+<tr><td rowspan="1"><b>🛰️ Astrodynamics</b></td>
+    <td><a href="astrodynamics"><code>astrodynamics</code></a></td>
+    <td align="center">5</td><td align="center">Python</td>
+    <td align="center"><sub>family venv + NAIF kernels</sub></td></tr>
+
 <tr><td rowspan="1"><b>⚡ GPU kernel optimization</b></td>
     <td><a href="gpukernel"><code>gpukernel</code></a></td>
     <td align="center">1</td><td align="center">CUDA / Triton</td>
@@ -61,10 +66,13 @@ Task packages are organized by implementation family and aligned with [`best_res
     <td align="center">1</td><td align="center">Python</td>
     <td align="center"><sub>none</sub></td></tr>
 
-<tr><td rowspan="2"><b>🧬 Data science</b></td>
+<tr><td rowspan="3"><b>🧬 Data science</b></td>
     <td><a href="scaling_law"><code>scaling_law</code></a></td>
     <td align="center">4</td><td align="center">Python</td>
     <td align="center"><sub>HuggingFace cache</sub></td></tr>
+<tr><td><a href="zapbench"><code>zapbench</code></a></td>
+    <td align="center">1</td><td align="center">Python</td>
+    <td align="center"><sub>GPU + task venv + dataset</sub></td></tr>
 <tr><td><a href="open_problems_bio"><code>open_problems_bio</code></a></td>
     <td align="center">1</td><td align="center">Python</td>
     <td align="center"><sub>bundled venv + dataset</sub></td></tr>

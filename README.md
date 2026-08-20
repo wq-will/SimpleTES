@@ -26,6 +26,7 @@
 
 ## Updates
 
+- **2026-08** — Added the [ZAPBench whole-brain forecasting](datasets/zapbench/README.md) and [astrodynamics gravity-assist trajectory design](datasets/astrodynamics/README.md) task suites, together with their released best-result artifacts.
 - **2026-04** — Released the [SimpleTES technical report on arXiv](https://arxiv.org/abs/2604.19341) and the public codebase.
 
 ## Highlight Results
@@ -33,8 +34,8 @@
 | Domain | Representative problems |
 |--------|-------------------------|
 | Quantum compilation | Superconducting qubit routing and zoned neutral-atom compilation |
-| Astrodynamics | Gravity-assist trajectory design |
-| Scientific algorithms | LASSO path solving, whole-brain forecasting, and single-cell RNA denoising |
+| Astrodynamics | [Gravity-assist trajectory design](datasets/astrodynamics/README.md) |
+| Scientific algorithms | LASSO path solving, [whole-brain forecasting](datasets/zapbench/README.md), and single-cell RNA denoising |
 | AI foundations | GPU kernel optimization and scaling-law discovery |
 | Mathematics discovery | Extremal analysis and combinatorial construction |
 

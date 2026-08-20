@@ -1,0 +1,14 @@
+[project]
+name = "simpletes-astrodynamics"
+version = "0.1.0"
+description = "Task-local environment for SimpleTES astrodynamics benchmarks"
+requires-python = ">=3.11"
+dependencies = [
+    "numpy>=2.0",
+    "scipy>=1.13",
+    "numba>=0.60",
+    "spiceypy>=6.0",
+]
+
+[tool.uv]
+package = false

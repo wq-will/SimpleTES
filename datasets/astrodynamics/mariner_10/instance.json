@@ -1,0 +1,28 @@
+{
+    "id": "mariner10_venus_mercury",
+    "mission_name": "Mariner 10 Venus-Mercury transfer",
+    "description": "Design a Mariner-10-like Earth-to-Mercury trajectory using Venus gravity assists, with enough topology budget to discover repeated Venus flybys and V-infinity leverage DSMs.",
+    "category": "historical_inspired",
+    "mission_class": "historical_inspired_inner_planet_multi_ga",
+    "reference_family": "Mariner 10 Venus-Mercury",
+    "design_goal": "Reach Mercury with low arrival v-infinity by exploiting Venus gravity assists and, if useful, DSM placement such as aphelion V-infinity leverage maneuvers.",
+    "start": {
+        "type": "piecewise_linear",
+        "planet_id": "3",
+        "time": {"kind": "window", "lo": 41939.0, "hi": 42039.0},
+        "breakpoints": [[0, 0], [6.0, 0], [16.0, 10.0]]
+    },
+    "end": {
+        "type": "piecewise_linear",
+        "planet_id": "1",
+        "time": {"kind": "window", "lo": 42035.0, "hi": 42235.0},
+        "breakpoints": [[0, 0], [10.0, 0], [20.0, 10.0]]
+    },
+    "allowed_GA_planets": ["2"],
+    "flyby": {"min_altitude_km": {"2": 1000}},
+    "max_nodes": 14,
+    "max_GA": 5,
+    "max_DSM": 5,
+    "target_dv": 1.0,
+    "timeout_seconds": 300
+}

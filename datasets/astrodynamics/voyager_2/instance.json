@@ -1,0 +1,30 @@
+{
+    "id": "voyager2_grand_tour_neptune",
+    "mission_name": "Voyager 2 Grand Tour to Neptune",
+    "description": "Design a Voyager-2-like outer-planet tour from Earth to Neptune during a favorable grand-tour alignment.",
+    "category": "historical_inspired",
+    "mission_class": "historical_inspired_multi_ga",
+    "reference_family": "Voyager 2 Grand Tour",
+    "design_goal": "Exploit the outer-planet alignment and multiple gravity assists to reach Neptune with low impulsive cost.",
+    "start": {
+        "type": "piecewise_linear",
+        "planet_id": "3",
+        "time": {"kind": "window", "lo": 43325.0, "hi": 43425.0},
+        "breakpoints": [[0, 0], [6.0, 0], [16.0, 10.0]]
+    },
+    "end": {
+        "type": "piecewise_linear",
+        "planet_id": "8",
+        "time": {"kind": "window", "lo": 47363.0, "hi": 48163.0},
+        "breakpoints": [[0, 0], [30.0, 0], [40.0, 10.0]]
+    },
+    "allowed_GA_planets": ["5", "6", "7"],
+    "flyby": {
+        "min_altitude_km": {
+            "5": 20000, "6": 30000, "7": 2000, "8": 2000
+        }
+    },
+    "max_nodes": 20, "max_GA": 5, "max_DSM": 5,
+    "target_dv": 2.0,
+    "timeout_seconds": 300
+}

@@ -52,3 +52,6 @@ datasets/scaling_law/.sldbench_cached
 datasets/scaling_law/*/dataset/
 datasets/qubit_routing/*/rust/.cargo_target/
 datasets/qubit_routing/*/rust/target/
+datasets/astrodynamics/data/ephemerides/
+datasets/zapbench/whole_brain_forecasting/zapbench_cache/
+third_party/zapbench/
